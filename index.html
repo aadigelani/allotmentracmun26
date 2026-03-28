@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RACMUN — Allocation Reveal</title>
+
+  <!-- ✏️ FONTS: Cinzel for ceremonial display, Cormorant for elegance, Jost for UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES & RESET
+       ============================================================ */
+    :root {
+      --bg: #05080f;
+      --text: #e8dfc8;
+      --accent: #c4a55a;
+      --accent2: #7ba3c8;
+      --dim: rgba(232, 223, 200, 0.35);
+      --glow: rgba(196, 165, 90, 0.18);
+      --card-bg: rgba(255, 255, 255, 0.035);
+      --border: rgba(196, 165, 90, 0.22);
+      --error: #c87c6a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       SHARED UTILITIES
+       ============================================================ */
+    .hidden { display: none !important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+    /* ============================================================
+       ANIMATED BACKGROUND GRID
+       ============================================================ */
+    .bg-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(196,165,90,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(196,165,90,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridDrift 30s linear infinite;
+    }
+    @keyframes gridDrift {
+      0%   { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    /* Ambient orbs */
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(100px);
+      pointer-events: none; z-index: 0;
+      animation: orbFloat 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 600px; height: 600px; top: -200px; right: -150px;
+      background: radial-gradient(circle, rgba(196,165,90,0.08) 0%, transparent 70%); }
+    .orb-2 { width: 500px; height: 500px; bottom: -200px; left: -150px;
+      background: radial-gradient(circle, rgba(123,163,200,0.07) 0%, transparent 70%);
+      animation-delay: -9s; }
+    @keyframes orbFloat {
+      0%   { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.15) translate(30px, -30px); }
+    }
+
+    /* ============================================================
+       LANDING / INPUT SCREEN
+       ============================================================ */
+    #landing {
+      position: relative; z-index: 10;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      transition: opacity 0.6s ease;
+    }
+
+    /* Top emblem */
+    .emblem {
+      margin-bottom: 2.5rem;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.5rem;
+      animation: fadeDown 1s ease both;
+    }
+    .emblem-ring {
+      width: 80px; height: 80px;
+      border: 1.5px solid var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      box-shadow: 0 0 30px var(--glow), inset 0 0 20px var(--glow);
+      animation: ringPulse 4s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%, 100% { box-shadow: 0 0 20px var(--glow), inset 0 0 15px var(--glow); }
+      50%       { box-shadow: 0 0 50px rgba(196,165,90,0.35), inset 0 0 30px rgba(196,165,90,0.15); }
+    }
+    .emblem-ring::before, .emblem-ring::after {
+      content: ''; position: absolute;
+      border-radius: 50%;
+    }
+    .emblem-ring::before {
+      width: 92px; height: 92px;
+      border: 0.5px solid rgba(196,165,90,0.2);
+    }
+    .emblem-ring::after {
+      width: 106px; height: 106px;
+      border: 0.5px solid rgba(196,165,90,0.08);
+    }
+    .emblem-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 8px rgba(196,165,90,0.6));
+    }
+    .emblem-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-top: 1.5rem;
+    }
+
+    /* Main heading */
+    .landing-heading {
+      text-align: center;
+      animation: fadeDown 1s 0.2s ease both;
+    }
+    .landing-heading h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, #e8dfc8 0%, #c4a55a 50%, #e8dfc8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+    }
+    .landing-heading .subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.95rem, 2.5vw, 1.25rem);
+      font-style: italic;
+      color: var(--dim);
+      margin-top: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Divider line */
+    .divider {
+      width: 200px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      margin: 2.5rem auto;
+      animation: fadeIn 1.2s 0.4s ease both;
+    }
+
+    /* Input card */
+    .input-card {
+      width: 100%; max-width: 480px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.5rem 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      animation: fadeUp 1s 0.5s ease both;
+      position: relative;
+      overflow: hidden;
+    }
+    .input-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .input-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex; align-items: center;
+    }
+    .input-prefix {
+      position: absolute; left: 1rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 1rem;
+      color: var(--accent);
+      font-weight: 400;
+      pointer-events: none;
+      user-select: none;
+    }
+    #phoneInput {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(196,165,90,0.25);
+      border-radius: 3px;
+      padding: 1rem 1rem 1rem 2.8rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      letter-spacing: 0.08em;
+    }
+    #phoneInput::placeholder { color: rgba(232,223,200,0.2); font-size: 0.95rem; letter-spacing: 0.05em; }
+    #phoneInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow), 0 0 30px var(--glow);
+    }
+    #phoneInput::-webkit-outer-spin-button,
+    #phoneInput::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Reveal button */
+    .reveal-btn {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem 2rem;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.4s, box-shadow 0.4s;
+    }
+    .reveal-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.76, 0, 0.24, 1);
+      z-index: 0;
+    }
+    .reveal-btn:hover::before { transform: scaleX(1); }
+    .reveal-btn:hover { color: #05080f; box-shadow: 0 0 40px rgba(196,165,90,0.3); }
+    .reveal-btn span { position: relative; z-index: 1; }
+    .reveal-btn {min-height: 50px;}
+    /* Error message */
+    #errorMsg {
+      margin-top: 1.25rem;
+      padding: 0.85rem 1rem;
+      background: rgba(200, 80, 60, 0.08);
+      border: 1px solid rgba(200, 80, 60, 0.3);
+      border-radius: 3px;
+      color: var(--error);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.5;
+      animation: fadeIn 0.5s ease;
+    }
+
+    /* Footer note */
+    .landing-footer {
+      margin-top: 3rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      color: rgba(232,223,200,0.2);
+      text-align: center;
+      animation: fadeIn 1.5s 1s ease both;
+    }
+
+    /* ============================================================
+       LOADING OVERLAY
+       ============================================================ */
+    #loadingOverlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #02040a;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #loadingOverlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Scanning lines */
+    .scan-line {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: scanDown 3s linear infinite;
+      opacity: 0.6;
+    }
+    @keyframes scanDown {
+      0%   { top: 0%; opacity: 0; }
+      10%  { opacity: 0.6; }
+      90%  { opacity: 0.6; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    /* Central loader orb */
+    .loader-orb-wrap {
+      position: relative;
+      width: 120px; height: 120px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 3rem;
+    }
+    .loader-ring {
+      position: absolute; border-radius: 50%;
+    }
+    .loader-ring-1 {
+      width: 120px; height: 120px;
+      border: 1px solid rgba(196,165,90,0.4);
+      animation: spinCCW 4s linear infinite;
+    }
+    .loader-ring-2 {
+      width: 90px; height: 90px;
+      border: 1px solid rgba(196,165,90,0.25);
+      border-top-color: transparent;
+      animation: spinCW 3s linear infinite;
+    }
+    .loader-ring-3 {
+      width: 60px; height: 60px;
+      border: 1px solid var(--accent);
+      border-left-color: transparent;
+      border-right-color: transparent;
+      animation: spinCCW 2s linear infinite;
+    }
+    .loader-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 15px var(--accent), 0 0 30px rgba(196,165,90,0.4);
+    }
+    @keyframes spinCW  { to { transform: rotate(360deg); } }
+    @keyframes spinCCW { to { transform: rotate(-360deg); } }
+
+    /* Loading messages */
+    .loader-messages {
+      text-align: center;
+    }
+    .loader-msg {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.9rem, 4vw, 1.1rem);
+      letter-spacing: 0.3em;
+      color: var(--accent);
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      min-height: 1.5em;
+    }
+    
+    .loader-msg.visible { opacity: 1; }
+    .loader-submsg {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+      font-style: italic;
+      color: var(--dim);
+      margin-top: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      min-height: 1.5em;
+    }
+    .loader-submsg.visible { opacity: 1; }
+
+    /* Progress bar */
+    .loader-progress-track {
+      width: 240px; height: 1px;
+      background: rgba(196,165,90,0.15);
+      margin: 2rem auto 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .loader-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, transparent, var(--accent));
+      width: 0%;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    /* ============================================================
+       RESULT SCREEN
+       ============================================================ */
+    #resultScreen {
+      position: fixed; inset: 0; z-index: 90;
+      overflow-y: auto;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding: 4rem 1.5rem 5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    #resultScreen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ——— UNSC Theme ——— */
+    #resultScreen.theme-unsc {
+      background: radial-gradient(ellipse at 20% 20%, rgba(15,25,50,1) 0%, #02040a 60%);
+    }
+    #resultScreen.theme-unsc .result-committee-badge { color: #7ba3c8; border-color: rgba(123,163,200,0.3); }
+    #resultScreen.theme-unsc .result-committee-badge::before { background: linear-gradient(90deg, transparent, #7ba3c8, transparent); }
+    #resultScreen.theme-unsc .result-name { color: #e8dfc8; text-shadow: 0 0 80px rgba(123,163,200,0.2); }
+    #resultScreen.theme-unsc .result-accent { color: #c4a55a; }
+    #resultScreen.theme-unsc .download-btn { border-color: rgba(123,163,200,0.4); color: #7ba3c8; }
+    #resultScreen.theme-unsc .download-btn:hover { background: rgba(123,163,200,0.1); box-shadow: 0 0 30px rgba(123,163,200,0.15); }
+
+    /* ——— Lok Sabha Theme ——— */
+    #resultScreen.theme-loksabha {
+      background: radial-gradient(ellipse at 80% 10%, rgba(255,240,220,0.06) 0%, #0a0803 60%);
+    }
+    #resultScreen.theme-loksabha .result-committee-badge { color: #e07c3a; border-color: rgba(224,124,58,0.3); }
+    #resultScreen.theme-loksabha .result-committee-badge::before { background: linear-gradient(90deg, transparent, #e07c3a, transparent); }
+    #resultScreen.theme-loksabha .result-name { color: #f5e8d0; text-shadow: 0 0 80px rgba(224,124,58,0.15); }
+    #resultScreen.theme-loksabha .result-accent { color: #e07c3a; }
+    #resultScreen.theme-loksabha .download-btn { border-color: rgba(224,124,58,0.4); color: #e07c3a; }
+    #resultScreen.theme-loksabha .download-btn:hover { background: rgba(224,124,58,0.08); box-shadow: 0 0 30px rgba(224,124,58,0.15); }
+    .result-name {word-break: break-word;}
+    #resultScreen {padding: 3rem 1rem 4rem;}
+    /* Falling petals (Lok Sabha only) */
+    .petal-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 1;
+      opacity: 0;
+      transition: opacity 1s ease 1s;
+    }
+    .petal-canvas.visible { opacity: 1; }
+
+    /* Stars / particles (UNSC only) */
+    .stars-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 1;
+      opacity: 0;
+      transition: opacity 1s ease 1s;
+    }
+    .stars-canvas.visible { opacity: 1; }
+
+    /* Result content */
+    .result-content {
+      position: relative; z-index: 10;
+      width: 100%; max-width: 680px;
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      gap: 0;
+    }
+
+    /* Top label */
+    .result-toplabel {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.5em;
+      color: rgba(232,223,200,0.35);
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.8s 0.3s ease, transform 0.8s 0.3s ease;
+    }
+    .result-content.revealed .result-toplabel { opacity: 1; transform: translateY(0); }
+
+    /* Committee badge */
+    .result-committee-badge {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.7rem, 2vw, 0.85rem);
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      border: 1px solid;
+      padding: 0.5rem 1.5rem;
+      position: relative;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.8s 0.6s ease, transform 0.8s 0.6s ease;
+    }
+    .result-committee-badge::before {
+      content: '';
+      position: absolute; top: -1px; left: 0; right: 0;
+      height: 1px;
+    }
+    .result-content.revealed .result-committee-badge { opacity: 1; transform: translateY(0); }
+
+    /* Main name reveal */
+    .result-name-wrap {
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .result-name {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.2rem, 7vw, 5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 0.05em;
+      display: block;
+      transform: translateY(110%);
+      transition: transform 1s 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .result-content.revealed .result-name { transform: translateY(0); }
+
+    /* Role type */
+    .result-role {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+      font-style: italic;
+      color: var(--dim);
+      margin-bottom: 3rem;
+      opacity: 0;
+      transition: opacity 0.8s 1.6s ease;
+    }
+    .result-content.revealed .result-role { opacity: 1; }
+
+    /* Separator */
+    .result-separator {
+      width: 1px; height: 60px;
+      background: linear-gradient(180deg, var(--accent), transparent);
+      margin: 0 auto 2.5rem;
+      opacity: 0;
+      transition: opacity 0.8s 1.9s ease;
+    }
+    .result-content.revealed .result-separator { opacity: 1; }
+
+    /* Download section */
+    .downloads-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.4em;
+      color: rgba(232,223,200,0.3);
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      opacity: 0;
+      transition: opacity 0.8s 2.1s ease;
+    }
+    .result-content.revealed .downloads-label { opacity: 1; }
+
+    .downloads-grid {
+      display: flex; flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+      opacity: 0;
+      transition: opacity 0.8s 2.2s ease;
+    }
+    .result-content.revealed .downloads-grid { opacity: 1; }
+
+    .download-btn {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid;
+      border-radius: 3px;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+    }
+    .download-btn:hover { transform: translateY(-2px); }
+    .download-btn-icon { font-size: 1rem; }
+
+    /* Return button */
+    .return-btn {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      margin-top: 1rem;
+      padding: 0.6rem 1.5rem;
+      background: transparent;
+      border: none;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      color: rgba(232,223,200,0.3);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s;
+      opacity: 0;
+      transition: opacity 0.8s 2.4s ease, color 0.3s;
+    }
+    .result-content.revealed .return-btn { opacity: 1; }
+    .return-btn:hover { color: var(--text); }
+
+    /* Try again */
+    .try-again-btn {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: none;
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: rgba(196,165,90,0.45);
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.3s;
+      opacity: 0;
+      animation: none;
+    }
+    .result-content.revealed .try-again-btn {
+      opacity: 1;
+      transition: opacity 0.8s 2.5s ease, color 0.3s;
+    }
+    .try-again-btn:hover { color: var(--accent); }
+
+    /* Pillar decorations (Lok Sabha) */
+    .pillar-deco {
+      position: fixed;
+      top: 0; bottom: 0;
+      width: 4px;
+      opacity: 0;
+      transition: opacity 1s ease 1.5s;
+      pointer-events: none; z-index: 5;
+    }
+    .pillar-deco.left  { left: 3rem; }
+    .pillar-deco.right { right: 3rem; }
+    .pillar-deco.visible { opacity: 1; }
+    .pillar-deco-inner {
+      width: 100%; height: 100%;
+      background: linear-gradient(180deg, transparent, rgba(224,124,58,0.15), rgba(224,124,58,0.25), rgba(224,124,58,0.15), transparent);
+      position: relative;
+    }
+    .pillar-deco-inner::before, .pillar-deco-inner::after {
+      content: ''; position: absolute;
+      left: -6px; right: -6px;
+      height: 1px;
+      background: rgba(224,124,58,0.3);
+    }
+    .pillar-deco-inner::before { top: 15%; }
+    .pillar-deco-inner::after  { bottom: 15%; }
+
+    /* UNSC corner accents */
+    .corner-accent {
+      position: fixed;
+      width: 50px; height: 50px;
+      opacity: 0;
+      transition: opacity 1s ease 1.5s;
+      pointer-events: none; z-index: 5;
+    }
+    .corner-accent.tl { top: 1.5rem; left: 1.5rem; border-top: 1px solid rgba(123,163,200,0.35); border-left: 1px solid rgba(123,163,200,0.35); }
+    .corner-accent.tr { top: 1.5rem; right: 1.5rem; border-top: 1px solid rgba(123,163,200,0.35); border-right: 1px solid rgba(123,163,200,0.35); }
+    .corner-accent.bl { bottom: 1.5rem; left: 1.5rem; border-bottom: 1px solid rgba(123,163,200,0.35); border-left: 1px solid rgba(123,163,200,0.35); }
+    .corner-accent.br { bottom: 1.5rem; right: 1.5rem; border-bottom: 1px solid rgba(123,163,200,0.35); border-right: 1px solid rgba(123,163,200,0.35); }
+    .corner-accent.visible { opacity: 1; }
+
+    /* ============================================================
+       KEYFRAME ANIMATIONS
+       ============================================================ */
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 600px) {
+      .pillar-deco.left  { left: 0.8rem; }
+      .pillar-deco.right { right: 0.8rem; }
+      .corner-accent.tl, .corner-accent.bl { left: 0.8rem; }
+      .corner-accent.tr, .corner-accent.br { right: 0.8rem; }
+      .result-content { padding: 0 0.5rem; }
+      .downloads-grid { flex-direction: column; align-items: center; }
+      .download-btn { width: 100%; max-width: 280px; justify-content: center; }
+    }
+    @media (max-width: 600px) {
+      #phoneInput {
+      font-size: 1.2rem;
+      padding: 1.2rem 1rem 1.2rem 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     BACKGROUND ELEMENTS
+     ═══════════════════════════════════════════════════ -->
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     LANDING / INPUT SCREEN
+     ═══════════════════════════════════════════════════ -->
+<section id="landing">
+  <div class="emblem">
+    <div class="emblem-ring">
+      <span class="emblem-icon">⚖</span>
+    </div>
+    <span class="emblem-label">RACMUN · Model United Nations</span>
+  </div>
+
+  <div class="landing-heading">
+    <h1>ALLOCATION<br>REVEAL</h1>
+    <p class="subtitle">Your diplomatic mandate awaits</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="input-card">
+    <label class="input-label" for="phoneInput">Registered Mobile Number</label>
+    <div class="input-wrapper">
+      <span class="input-prefix">+91</span>
+      <input
+        type="tel"
+        id="phoneInput"
+        placeholder="Enter 10-digit number"
+        maxlength="10"
+        autocomplete="off"
+        inputmode="numeric"
+      />
+    </div>
+    <button class="reveal-btn" onclick="handleReveal()">
+      <span>✦ &nbsp;Reveal My Allocation&nbsp; ✦</span>
+    </button>
+    <div id="errorMsg" class="hidden">
+      No allocation found. Please check your number or wait for the official release.
+    </div>
+  </div>
+
+  <p class="landing-footer">RACMUN &nbsp;·&nbsp; ALLOCATION PORTAL &nbsp;·&nbsp; CONFIDENTIAL</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     LOADING OVERLAY
+     ═══════════════════════════════════════════════════ -->
+<div id="loadingOverlay">
+  <div class="scan-line"></div>
+  <div class="loader-orb-wrap">
+    <div class="loader-ring loader-ring-1"></div>
+    <div class="loader-ring loader-ring-2"></div>
+    <div class="loader-ring loader-ring-3"></div>
+    <div class="loader-dot"></div>
+  </div>
+  <div class="loader-messages">
+    <div class="loader-msg" id="loaderMsg"></div>
+    <div class="loader-submsg" id="loaderSubMsg"></div>
+    <div class="loader-progress-track">
+      <div class="loader-progress-fill" id="loaderProgress"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     RESULT SCREEN
+     ═══════════════════════════════════════════════════ -->
+<div id="resultScreen">
+  <!-- UNSC corner accents -->
+  <div class="corner-accent tl" id="cornerTL"></div>
+  <div class="corner-accent tr" id="cornerTR"></div>
+  <div class="corner-accent bl" id="cornerBL"></div>
+  <div class="corner-accent br" id="cornerBR"></div>
+
+  <!-- Lok Sabha pillars -->
+  <div class="pillar-deco left" id="pillarL"><div class="pillar-deco-inner"></div></div>
+  <div class="pillar-deco right" id="pillarR"><div class="pillar-deco-inner"></div></div>
+
+  <!-- Particle canvases -->
+  <canvas class="stars-canvas" id="starsCanvas"></canvas>
+  <canvas class="petal-canvas" id="petalCanvas"></canvas>
+
+  <div class="result-content" id="resultContent">
+    <div class="result-toplabel">YOUR DIPLOMATIC ALLOCATION</div>
+    <div class="result-committee-badge" id="resultCommittee">COMMITTEE</div>
+    <div class="result-name-wrap">
+      <span class="result-name" id="resultName">PORTFOLIO</span>
+    </div>
+    <div class="result-role" id="resultRole">Representing as Member State</div>
+    <div class="result-separator"></div>
+
+    <div class="downloads-label">OFFICIAL RESOURCES</div>
+    <div class="downloads-grid" id="downloadsGrid">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- ✏️ EDIT HERE: Change the RACMUN website URL -->
+    <a href="#" target="_blank" rel="noopener noreferrer" class="return-btn" id="returnBtn">
+      ← &nbsp;Return to RACMUN Website
+    </a>
+
+    <button class="try-again-btn" onclick="resetToLanding()">Search Again</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════ -->
+<script>
+/* ============================================================
+   DATA CONFIGURATION
+   ============================================================ */
+
+// ✏️ EDIT HERE: Replace with your allotments.json path if needed
+const ALLOTMENTS_JSON_PATH = './allotments.json';
+
+// ✏️ EDIT HERE: List of UNSC member countries (keep these unique)
+const UNSC_COUNTRIES = [
+  "United States of America",
+  "United Kingdom",
+  "France",
+  "Russian Federation",
+  "People's Republic of China",
+  "Germany",
+  "Japan",
+  "India",
+  "Brazil",
+  "South Africa",
+  "Algeria",
+  "Guyana",
+  "Sierra Leone",
+  "Slovenia",
+  "Republic of Korea",
+  "Ecuador",
+  "Malta",
+  "Mozambique",
+  "Switzerland",
+  "Japan"
+];
+
+// ✏️ EDIT HERE: Add real Lok Sabha MP names below (replace these placeholders)
+const LOK_SABHA_MPS = [
+  // ─── PASTE ACTUAL MP NAMES HERE ───────────────────────────
+  "Narendra Modi",       // Example – replace with real delegates
+  "Om Birla",
+  "Rahul Gandhi",
+  "Amit Shah",
+  "Smriti Irani",
+  "Anurag Thakur",
+  "Hema Malini",
+  "Dimple Yadav",
+  "Kangana Ranaut",
+  "Shashi Tharoor",
+  "Supriya Sule",
+  "Nishikant Dubey",
+  "Mahua Moitra",
+  "Sanjay Singh",
+  "Tejasvi Surya",
+  "Kanimozhi Karunanidhi",
+  "Manish Tewari",
+  "Asaduddin Owaisi",
+  "Jyotirmay Singh Mahato",
+  "Dharmendra Pradhan"
+  // ─── END OF MP NAMES ─────────────────────────────────────
+];
+
+// ✏️ EDIT HERE: Guide download links (use '#' as placeholder until you have real links)
+const GUIDES = {
+  unsc_background: {
+    label: "Background Guide",
+    icon: "📄",
+    href: "#" // ✏️ Replace with actual UNSC Background Guide URL
+  },
+  unsc_position: {
+    label: "Position Paper Guide",
+    icon: "📋",
+    href: "#" // ✏️ Replace with actual Position Paper Guide URL
+  },
+  loksabha_guide: {
+    label: "Lok Sabha Guide",
+    icon: "🏛",
+    href: "#" // ✏️ Replace with actual Lok Sabha Guide URL
+  },
+  loksabha_position: {
+    label: "Position Paper Guide",
+    icon: "📋",
+    href: "#" // ✏️ Replace with actual Position Paper Guide URL
+  }
+};
+
+// ✏️ EDIT HERE: RACMUN website URL
+const RACMUN_WEBSITE = "https://racmun.in"; // Replace with real URL
+
+
+/* ============================================================
+   SEEDED RNG — Deterministic shuffle so same phone always
+   gets the same allocation every time the page reloads
+   ============================================================ */
+function seededRandom(seed) {
+  let s = seed;
+  return function () {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function hashPhone(phone) {
+  let h = 0;
+  for (let i = 0; i < phone.length; i++) {
+    h = (h * 31 + phone.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+function shuffleWithSeed(arr, rng) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ============================================================
+   ALLOTMENT LOGIC
+   Assigns committee + portfolio deterministically per phone
+   ============================================================ */
+function computeAllocation(phone, allDelegates) {
+  const seed = hashPhone(phone);
+  const rng  = seededRandom(seed);
+
+  // 1) Shuffle all delegates with a shared seed so same delegates
+  //    get allocated the same way every time
+  const globalRng = seededRandom(12345); // fixed seed for consistent ordering
+  const shuffled  = shuffleWithSeed(allDelegates, globalRng);
+
+  // 2) Shuffle pool arrays with same global seed
+  const countries = shuffleWithSeed(UNSC_COUNTRIES, seededRandom(99991));
+  const mps       = shuffleWithSeed(LOK_SABHA_MPS,  seededRandom(77773));
+
+  // 3) Find this delegate's position in shuffled list
+  const idx = shuffled.findIndex(d => d === phone);
+
+  // 4) Controlled random committee assignment
+  //    Use delegate-specific RNG for variety, but weight ~50/50
+  const committeeRoll = rng();
+  const committee = committeeRoll < 0.5 ? "UNSC" : "Lok Sabha";
+
+  // 5) Assign portfolio — pick from country/MP pool based on idx
+  //    mod ensures no index out of bounds
+  let portfolio;
+  if (committee === "UNSC") {
+    portfolio = countries[idx % countries.length];
+  } else {
+    portfolio = mps[idx % mps.length];
+  }
+
+  return { committee, portfolio };
+}
+
+
+/* ============================================================
+   MAIN REVEAL HANDLER
+   ============================================================ */
+async function handleReveal() {
+  const rawInput = document.getElementById('phoneInput').value.trim();
+  const phone    = rawInput; // Treat phone numbers as strings (no parseInt)
+
+  // Basic validation
+  if (!phone || phone.length < 10) {
+    showError();
+    return;
+  }
+
+  // Hide error if visible
+  document.getElementById('errorMsg').classList.add('hidden');
+
+  // 1) Fetch allotments.json
+  let delegateList;
+  try {
+    const res  = await fetch(ALLOTMENTS_JSON_PATH);
+    const data = await res.json();
+    delegateList = data.delegates.map(d => String(d)); // ensure strings
+  } catch (e) {
+    console.error(e);
+    showError("Server error. Try again later or contact organizers.");
+    return;
+  }
+
+  // 2) Check if phone exists
+  if (!delegateList.includes(phone)) {
+    showError();
+    return;
+  }
+
+  // 3) Compute allocation
+  const { committee, portfolio } = computeAllocation(phone, delegateList);
+
+  // 4) Run cinematic loading sequence then show result
+  await runLoadingSequence(committee);
+  showResult(committee, portfolio);
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  if (msg) el.textContent = msg;
+  else el.textContent = "No allocation found. Please check your number or wait for the official release.";
+  el.classList.remove('hidden');
+  el.style.animation = 'none';
+  requestAnimationFrame(() => { el.style.animation = 'fadeIn 0.5s ease'; });
+}
+
+
+/* ============================================================
+   CINEMATIC LOADING SEQUENCE
+   ============================================================ */
+async function runLoadingSequence(committee) {
+  const overlay  = document.getElementById('loadingOverlay');
+  const msgEl    = document.getElementById('loaderMsg');
+  const subEl    = document.getElementById('loaderSubMsg');
+  const progress = document.getElementById('loaderProgress');
+
+  // Fade in landing out
+  document.getElementById('landing').style.opacity = '0';
+  document.getElementById('landing').style.pointerEvents = 'none';
+
+  // Different message sequences per committee
+  const sequences = committee === "UNSC"
+    ? [
+        { msg: "Accessing Global Council...",      sub: "Verifying diplomatic credentials",     pct: 20 },
+        { msg: "Processing Diplomatic Allocation...", sub: "Cross-referencing UN Security Registry", pct: 45 },
+        { msg: "Authorizing Representation...",    sub: "Confirming member state assignment",   pct: 70 },
+        { msg: "Assigning Committee...",           sub: "UN Security Council · Permanent Session", pct: 88 },
+        { msg: "Finalizing Portfolio...",          sub: "Allocation sealed and certified",       pct: 100 }
+      ]
+    : [
+        { msg: "Processing Diplomatic Allocation...", sub: "Searching Sansad registration records", pct: 20 },
+        { msg: "Accessing Legislative Archive...",  sub: "Verifying constituency assignment",    pct: 45 },
+        { msg: "Assigning Committee...",           sub: "Lok Sabha · Lower House of Parliament", pct: 70 },
+        { msg: "Confirming Portfolio...",          sub: "Parliamentary seat being assigned",    pct: 88 },
+        { msg: "Finalizing Portfolio...",          sub: "Allocation sealed and certified",       pct: 100 }
+      ];
+
+  await delay(100);
+  overlay.classList.add('active');
+
+  for (const step of sequences) {
+    msgEl.classList.remove('visible');
+    subEl.classList.remove('visible');
+    await delay(200);
+    msgEl.textContent = step.msg;
+    subEl.textContent = step.sub;
+    msgEl.classList.add('visible');
+    await delay(80);
+    subEl.classList.add('visible');
+    progress.style.width = step.pct + '%';
+    await delay(900);
+  }
+
+  await delay(400);
+  overlay.classList.remove('active');
+  await delay(500);
+}
+
+
+/* ============================================================
+   SHOW RESULT
+   ============================================================ */
+function showResult(committee, portfolio) {
+  const screen = document.getElementById('resultScreen');
+  const content = document.getElementById('resultContent');
+
+  // Set theme class
+  screen.className = '';
+  screen.classList.add(committee === "UNSC" ? 'theme-unsc' : 'theme-loksabha');
+
+  // Populate text
+  document.getElementById('resultCommittee').textContent = committee;
+  document.getElementById('resultName').textContent      = portfolio;
+  document.getElementById('resultRole').textContent      = committee === "UNSC"
+    ? "Representing as Member State — United Nations Security Council"
+    : "Representing as Member of Parliament — Lok Sabha";
+
+  // Populate download buttons
+  const grid = document.getElementById('downloadsGrid');
+  grid.innerHTML = '';
+  const btnDefs = committee === "UNSC"
+    ? [GUIDES.unsc_background, GUIDES.unsc_position]
+    : [GUIDES.loksabha_guide, GUIDES.loksabha_position];
+
+  btnDefs.forEach(b => {
+    const a = document.createElement('a');
+    a.href = b.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'download-btn';
+    a.innerHTML = `<span class="download-btn-icon">${b.icon}</span>${b.label}`;
+    grid.appendChild(a);
+  });
+
+  // Update return link
+  document.getElementById('returnBtn').href = RACMUN_WEBSITE;
+
+  // Show theme decorations
+  if (committee === "UNSC") {
+    ['cornerTL','cornerTR','cornerBL','cornerBR'].forEach(id => {
+      setTimeout(() => document.getElementById(id).classList.add('visible'), 1000);
+    });
+    document.getElementById('pillarL').classList.remove('visible');
+    document.getElementById('pillarR').classList.remove('visible');
+    setTimeout(() => startStars(), 800);
+  } else {
+    document.getElementById('cornerTL').classList.remove('visible');
+    document.getElementById('cornerTR').classList.remove('visible');
+    document.getElementById('cornerBL').classList.remove('visible');
+    document.getElementById('cornerBR').classList.remove('visible');
+    setTimeout(() => {
+      document.getElementById('pillarL').classList.add('visible');
+      document.getElementById('pillarR').classList.add('visible');
+    }, 500);
+    setTimeout(() => startPetals(), 800);
+  }
+
+  // Activate screen
+  screen.classList.add('active');
+  setTimeout(() => content.classList.add('revealed'), 300);
+}
+
+
+/* ============================================================
+   RESET
+   ============================================================ */
+function resetToLanding() {
+  const screen  = document.getElementById('resultScreen');
+  const content = document.getElementById('resultContent');
+  const landing = document.getElementById('landing');
+
+  stopParticles();
+
+  content.classList.remove('revealed');
+  screen.classList.remove('active');
+  ['cornerTL','cornerTR','cornerBL','cornerBR'].forEach(id => document.getElementById(id).classList.remove('visible'));
+  document.getElementById('pillarL').classList.remove('visible');
+  document.getElementById('pillarR').classList.remove('visible');
+
+  setTimeout(() => {
+    document.getElementById('phoneInput').value = '';
+    document.getElementById('errorMsg').classList.add('hidden');
+    landing.style.opacity = '1';
+    landing.style.pointerEvents = '';
+  }, 500);
+}
+
+
+/* ============================================================
+   PARTICLE SYSTEMS
+   ============================================================ */
+let particleRAF = null;
+
+function stopParticles() {
+  if (particleRAF) { cancelAnimationFrame(particleRAF); particleRAF = null; }
+  document.getElementById('starsCanvas').classList.remove('visible');
+  document.getElementById('petalCanvas').classList.remove('visible');
+}
+
+// — Starfield (UNSC) —
+function startStars() {
+  const canvas = document.getElementById('starsCanvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.classList.add('visible');
+  resizeCanvas(canvas);
+
+  const stars = Array.from({ length: 120 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.2 + 0.2,
+    speed: Math.random() * 0.3 + 0.05,
+    opacity: Math.random()
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      s.opacity += (Math.random() - 0.5) * 0.02;
+      s.opacity = Math.max(0.05, Math.min(0.7, s.opacity));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(196, 165, 90, ${s.opacity})`;
+      ctx.fill();
+      s.y -= s.speed;
+      if (s.y < -2) { s.y = canvas.height + 2; s.x = Math.random() * canvas.width; }
+    });
+    particleRAF = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// — Falling Petals (Lok Sabha) —
+function startPetals() {
+  const canvas = document.getElementById('petalCanvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.classList.add('visible');
+  resizeCanvas(canvas);
+
+  const petals = Array.from({ length: 40 }, () => spawnPetal(canvas, true));
+
+  function spawnPetal(canvas, offscreen) {
+    const startY = offscreen ? -20 - Math.random() * canvas.height : -20;
+    return {
+      x:     Math.random() * canvas.width,
+      y:     startY,
+      size:  Math.random() * 8 + 5,
+      speed: Math.random() * 1.2 + 0.4,
+      drift: (Math.random() - 0.5) * 0.8,
+      rot:   Math.random() * Math.PI * 2,
+      rotS:  (Math.random() - 0.5) * 0.04,
+      opacity: Math.random() * 0.4 + 0.2
+    };
+  }
+
+  function drawPetal(ctx, p) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = p.opacity;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size);
+    g.addColorStop(0, 'rgba(255, 200, 150, 0.9)');
+    g.addColorStop(1, 'rgba(224, 124, 58, 0.3)');
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    petals.forEach((p, i) => {
+      drawPetal(ctx, p);
+      p.y   += p.speed;
+      p.x   += p.drift + Math.sin(p.y * 0.02) * 0.5;
+      p.rot += p.rotS;
+      if (p.y > canvas.height + 30) {
+        petals[i] = spawnPetal(canvas, false);
+      }
+    });
+    particleRAF = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function resizeCanvas(canvas) {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+
+/* ============================================================
+   KEYBOARD SUPPORT
+   ============================================================ */
+document.getElementById('phoneInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleReveal();
+});
+
+// Only allow numeric input
+document.getElementById('phoneInput').addEventListener('input', function () {
+  this.value = this.value.replace(/\D/g, '');
+});
+
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+window.addEventListener('resize', () => {
+  const sc = document.getElementById('starsCanvas');
+  const pc = document.getElementById('petalCanvas');
+  if (sc.classList.contains('visible')) resizeCanvas(sc);
+  if (pc.classList.contains('visible')) resizeCanvas(pc);
+});
+</script>
+</body>
+</html>
