@@ -689,6 +689,167 @@
       padding: 1.2rem 1rem 1.2rem 3rem;
       }
     }
+
+    /* ============================================================
+       QUERY SUBMISSION SECTION — Added for delegate queries
+       ============================================================ */
+    #querySection {
+      width: 100%; max-width: 480px;
+      margin-top: 2rem;
+      animation: fadeUp 1s 0.8s ease both;
+    }
+
+    .query-divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .query-divider-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(196,165,90,0.2));
+    }
+    .query-divider-line.right {
+      background: linear-gradient(90deg, rgba(196,165,90,0.2), transparent);
+    }
+    .query-divider-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.35em;
+      color: rgba(196,165,90,0.4);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .query-card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid rgba(196,165,90,0.14);
+      border-radius: 4px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+    .query-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(196,165,90,0.3), transparent);
+    }
+    .query-card-heading {
+      font-family: 'Cinzel', serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.4em;
+      color: rgba(196,165,90,0.6);
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .query-card-heading::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 1px;
+      background: rgba(196,165,90,0.4);
+      flex-shrink: 0;
+    }
+
+    #queryPhoneInput {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(196,165,90,0.2);
+      border-radius: 3px;
+      padding: 0.85rem 1rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    #queryPhoneInput::placeholder { color: rgba(232,223,200,0.2); font-size: 0.9rem; }
+    #queryPhoneInput:focus {
+      border-color: rgba(196,165,90,0.5);
+      box-shadow: 0 0 0 2px rgba(196,165,90,0.08);
+    }
+
+    #queryTextarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(196,165,90,0.2);
+      border-radius: 3px;
+      padding: 0.85rem 1rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+      font-style: italic;
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+    #queryTextarea::placeholder { color: rgba(232,223,200,0.2); font-style: italic; font-size: 0.95rem; }
+    #queryTextarea:focus {
+      border-color: rgba(196,165,90,0.5);
+      box-shadow: 0 0 0 2px rgba(196,165,90,0.08);
+    }
+
+    .query-submit-btn {
+      width: 100%;
+      padding: 0.85rem 2rem;
+      background: transparent;
+      border: 1px solid rgba(196,165,90,0.35);
+      border-radius: 3px;
+      color: rgba(196,165,90,0.75);
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.4s, border-color 0.4s, box-shadow 0.4s;
+    }
+    .query-submit-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(196,165,90,0.08);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.76,0,0.24,1);
+      z-index: 0;
+    }
+    .query-submit-btn:hover::before { transform: scaleX(1); }
+    .query-submit-btn:hover { color: var(--accent); border-color: var(--accent); box-shadow: 0 0 20px rgba(196,165,90,0.1); }
+    .query-submit-btn span { position: relative; z-index: 1; }
+    .query-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .query-submit-btn:disabled::before { display: none; }
+
+    #queryStatus {
+      margin-top: 0.85rem;
+      padding: 0.7rem 1rem;
+      border-radius: 3px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.5;
+      animation: fadeIn 0.4s ease;
+    }
+    #queryStatus.success {
+      background: rgba(90,180,120,0.07);
+      border: 1px solid rgba(90,180,120,0.25);
+      color: #7ec99a;
+    }
+    #queryStatus.error {
+      background: rgba(200,80,60,0.07);
+      border: 1px solid rgba(200,80,60,0.25);
+      color: var(--error);
+    }
   </style>
 </head>
 <body>
@@ -740,6 +901,43 @@
   </div>
 
   <p class="landing-footer">RACMUN &nbsp;·&nbsp; ALLOCATION PORTAL &nbsp;·&nbsp; CONFIDENTIAL</p>
+
+  <!-- ═══════════════════════════════════════════════════
+       QUERY SUBMISSION SECTION
+       Added: delegates can submit queries to the admin
+       ═══════════════════════════════════════════════════ -->
+  <div id="querySection">
+    <div class="query-divider">
+      <div class="query-divider-line"></div>
+      <span class="query-divider-label">Submit a Query</span>
+      <div class="query-divider-line right"></div>
+    </div>
+
+    <div class="query-card">
+      <div class="query-card-heading">Delegate Communication</div>
+
+      <input
+        type="tel"
+        id="queryPhoneInput"
+        placeholder="Your phone number"
+        maxlength="10"
+        autocomplete="off"
+        inputmode="numeric"
+      />
+
+      <textarea
+        id="queryTextarea"
+        placeholder="Type your query or concern here..."
+        rows="4"
+      ></textarea>
+
+      <button class="query-submit-btn" onclick="submitQuery()">
+        <span>↑ &nbsp;Submit Query</span>
+      </button>
+
+      <div id="queryStatus" class="hidden"></div>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════
@@ -1317,6 +1515,98 @@ window.addEventListener('resize', () => {
   if (sc.classList.contains('visible')) resizeCanvas(sc);
   if (pc.classList.contains('visible')) resizeCanvas(pc);
 });
+</script>
+
+<!-- ═══════════════════════════════════════════════════
+     FIREBASE — Query Submission System
+     Using Firebase Realtime Database v9 compat SDK
+     DO NOT modify existing nodes — only writes to queries/
+     ═══════════════════════════════════════════════════ -->
+<script type="module">
+  // ✏️ EDIT HERE: Replace with your actual Firebase project config
+  // Get this from Firebase Console → Project Settings → Your apps → SDK setup
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBmcrIARMXksDd0SD-GJMVY0HidSjS0WZ8",
+    authDomain: "racmun-voting.firebaseapp.com",
+    databaseURL: "https://racmun-voting-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "racmun-voting",
+    storageBucket: "racmun-voting.firebasestorage.app",
+    messagingSenderId: "263791447211",
+    appId: "1:263791447211:web:1e1b5aa814d96521a23bee"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  /* ----------------------------------------------------------
+     submitQuery()
+     Validates input, pushes to Firebase queries/ node,
+     clears form, shows confirmation.
+     ---------------------------------------------------------- */
+  window.submitQuery = async function () {
+    const phoneEl  = document.getElementById('queryPhoneInput');
+    const queryEl  = document.getElementById('queryTextarea');
+    const statusEl = document.getElementById('queryStatus');
+    const btn      = document.querySelector('.query-submit-btn');
+
+    const phone = phoneEl.value.trim();
+    const query = queryEl.value.trim();
+
+    // — Validation —
+    if (!phone || phone.length < 10) {
+      showQueryStatus('Please enter a valid 10-digit phone number.', 'error');
+      return;
+    }
+    if (!query) {
+      showQueryStatus('Please enter your query before submitting.', 'error');
+      return;
+    }
+
+    // — Disable button while submitting —
+    btn.disabled = true;
+    btn.querySelector('span').textContent = '⟳  Submitting...';
+
+    try {
+      // Push to Firebase: queries/{autoId}
+      // This creates a NEW node — does NOT touch any existing data
+      await push(ref(db, 'queries'), {
+        phone:     phone,          // string — treated as string per spec
+        query:     query,
+        timestamp: Date.now()
+      });
+
+      // — Success —
+      phoneEl.value = '';
+      queryEl.value = '';
+      showQueryStatus('✦ Query submitted successfully. We will get back to you shortly.', 'success');
+
+    } catch (err) {
+      console.error('Firebase query push failed:', err);
+      showQueryStatus('Submission failed. Please check your connection and try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '↑ \u00a0Submit Query';
+    }
+  };
+
+  function showQueryStatus(msg, type) {
+    const el = document.getElementById('queryStatus');
+    el.textContent = msg;
+    el.className = type; // 'success' or 'error'
+    el.classList.remove('hidden');
+    // Auto-hide success after 6s
+    if (type === 'success') {
+      setTimeout(() => { el.classList.add('hidden'); }, 6000);
+    }
+  }
+
+  // Only allow numeric input in query phone field
+  document.getElementById('queryPhoneInput').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '');
+  });
 </script>
 </body>
 </html>

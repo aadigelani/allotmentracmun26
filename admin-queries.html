@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RACMUN — Admin · Query Viewer</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES — matches index.html design language
+       ============================================================ */
+    :root {
+      --bg:       #05080f;
+      --text:     #e8dfc8;
+      --accent:   #c4a55a;
+      --dim:      rgba(232, 223, 200, 0.35);
+      --glow:     rgba(196, 165, 90, 0.18);
+      --card-bg:  rgba(255, 255, 255, 0.035);
+      --border:   rgba(196, 165, 90, 0.22);
+      --error:    #c87c6a;
+      --success:  #7ec99a;
+      --warn:     rgba(196, 165, 90, 0.5);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid — same as index */
+    .bg-grid {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(196,165,90,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(196,165,90,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridDrift 30s linear infinite;
+    }
+    @keyframes gridDrift {
+      0%   { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(100px);
+      pointer-events: none; z-index: 0;
+      animation: orbFloat 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { width: 500px; height: 500px; top: -150px; right: -100px;
+      background: radial-gradient(circle, rgba(196,165,90,0.07) 0%, transparent 70%); }
+    .orb-2 { width: 400px; height: 400px; bottom: -150px; left: -100px;
+      background: radial-gradient(circle, rgba(123,163,200,0.05) 0%, transparent 70%);
+      animation-delay: -9s; }
+    @keyframes orbFloat {
+      0%   { transform: scale(1) translate(0,0); }
+      100% { transform: scale(1.15) translate(20px,-20px); }
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp   { from { opacity: 0; transform: translateY(16px);  } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideIn  { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* ============================================================
+       LOGIN SCREEN
+       ============================================================ */
+    #loginScreen {
+      position: relative; z-index: 10;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      transition: opacity 0.5s ease;
+    }
+
+    .login-emblem {
+      margin-bottom: 2rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      animation: fadeDown 0.9s ease both;
+    }
+    .login-emblem-ring {
+      width: 70px; height: 70px;
+      border: 1.5px solid rgba(196,165,90,0.5);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 25px var(--glow), inset 0 0 15px var(--glow);
+      position: relative;
+    }
+    .login-emblem-ring::before {
+      content: ''; position: absolute;
+      width: 84px; height: 84px;
+      border: 0.5px solid rgba(196,165,90,0.15);
+      border-radius: 50%;
+    }
+    .login-emblem-icon { font-size: 1.8rem; filter: drop-shadow(0 0 6px rgba(196,165,90,0.5)); }
+    .login-emblem-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.45em;
+      color: rgba(196,165,90,0.55);
+      text-transform: uppercase;
+      margin-top: 1.2rem;
+    }
+
+    .login-heading {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      animation: fadeDown 0.9s 0.15s ease both;
+    }
+    .login-heading h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, #e8dfc8 0%, #c4a55a 50%, #e8dfc8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+    }
+    .login-heading .subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--dim);
+      margin-top: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+
+    .login-divider {
+      width: 160px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      margin: 1.8rem auto;
+      animation: fadeIn 1s 0.3s ease both;
+    }
+
+    .login-card {
+      width: 100%; max-width: 400px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2rem 1.75rem;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+      animation: fadeUp 0.9s 0.35s ease both;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .login-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.65rem;
+    }
+
+    #adminPassword {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(196,165,90,0.25);
+      border-radius: 3px;
+      padding: 0.9rem 1rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--text);
+      outline: none;
+      letter-spacing: 0.2em;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    #adminPassword::placeholder { color: rgba(232,223,200,0.2); letter-spacing: 0.05em; font-size: 0.9rem; }
+    #adminPassword:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow), 0 0 20px var(--glow);
+    }
+
+    .login-btn {
+      width: 100%; margin-top: 1.25rem;
+      padding: 0.9rem 2rem;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: color 0.4s, box-shadow 0.4s;
+    }
+    .login-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.76,0,0.24,1);
+      z-index: 0;
+    }
+    .login-btn:hover::before { transform: scaleX(1); }
+    .login-btn:hover { color: #05080f; box-shadow: 0 0 30px rgba(196,165,90,0.25); }
+    .login-btn span { position: relative; z-index: 1; }
+
+    #loginError {
+      margin-top: 1rem;
+      padding: 0.7rem 1rem;
+      background: rgba(200,80,60,0.07);
+      border: 1px solid rgba(200,80,60,0.25);
+      border-radius: 3px;
+      color: var(--error);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+    }
+
+    /* ============================================================
+       ADMIN DASHBOARD
+       ============================================================ */
+    #adminDashboard {
+      position: relative; z-index: 10;
+      min-height: 100vh;
+      padding: 0 1.5rem 4rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #adminDashboard.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Top bar */
+    .admin-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      padding: 1.75rem 0 1.5rem;
+      border-bottom: 1px solid rgba(196,165,90,0.12);
+      margin-bottom: 2rem;
+      animation: fadeDown 0.6s ease both;
+    }
+    .admin-topbar-left {
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .admin-badge {
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.4em;
+      color: rgba(196,165,90,0.5);
+      text-transform: uppercase;
+      border: 1px solid rgba(196,165,90,0.2);
+      padding: 0.3rem 0.75rem;
+      border-radius: 2px;
+    }
+    .admin-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.1rem, 3vw, 1.6rem);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, #e8dfc8, #c4a55a);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .admin-topbar-right {
+      display: flex; align-items: center; gap: 1.25rem;
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--success);
+      text-transform: uppercase;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* Count badge */
+    .count-badge {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      color: rgba(232,223,200,0.4);
+      letter-spacing: 0.1em;
+    }
+    .count-badge span {
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    /* Logout */
+    .logout-btn {
+      padding: 0.4rem 1rem;
+      background: transparent;
+      border: 1px solid rgba(196,165,90,0.2);
+      border-radius: 3px;
+      color: rgba(196,165,90,0.4);
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.3s, border-color 0.3s;
+    }
+    .logout-btn:hover { color: var(--error); border-color: rgba(200,80,60,0.3); }
+
+    /* Search / filter bar */
+    .filter-bar {
+      display: flex; gap: 0.75rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    #searchInput {
+      flex: 1; min-width: 200px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(196,165,90,0.18);
+      border-radius: 3px;
+      padding: 0.65rem 1rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #searchInput::placeholder { color: rgba(232,223,200,0.2); }
+    #searchInput:focus { border-color: rgba(196,165,90,0.45); }
+
+    .sort-btn {
+      padding: 0.65rem 1.1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(196,165,90,0.18);
+      border-radius: 3px;
+      color: rgba(232,223,200,0.5);
+      font-family: 'Cinzel', serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.3s, border-color 0.3s, background 0.3s;
+      white-space: nowrap;
+    }
+    .sort-btn:hover, .sort-btn.active {
+      color: var(--accent);
+      border-color: rgba(196,165,90,0.4);
+      background: rgba(196,165,90,0.05);
+    }
+
+    /* Query list */
+    .queries-container {
+      display: flex; flex-direction: column; gap: 0.85rem;
+      animation: fadeIn 0.6s 0.2s ease both;
+    }
+
+    /* Individual query card */
+    .query-entry {
+      background: var(--card-bg);
+      border: 1px solid rgba(196,165,90,0.12);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      animation: slideIn 0.4s ease both;
+    }
+    .query-entry:hover {
+      border-color: rgba(196,165,90,0.25);
+      box-shadow: 0 0 20px rgba(196,165,90,0.04);
+    }
+    .query-entry::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 2px; height: 100%;
+      background: linear-gradient(180deg, var(--accent), transparent);
+      opacity: 0.4;
+    }
+    .query-entry.new-entry {
+      border-color: rgba(196,165,90,0.35);
+      animation: newEntryFlash 1.5s ease forwards, slideIn 0.4s ease both;
+    }
+    @keyframes newEntryFlash {
+      0%   { box-shadow: 0 0 0 rgba(196,165,90,0); }
+      30%  { box-shadow: 0 0 25px rgba(196,165,90,0.15); }
+      100% { box-shadow: 0 0 0 rgba(196,165,90,0); }
+    }
+
+    .query-entry-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 1rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .query-meta {
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .query-phone {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+    }
+    .query-phone::before { content: '📱 '; }
+
+    .query-timestamp {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.72rem;
+      color: rgba(232,223,200,0.3);
+      letter-spacing: 0.05em;
+    }
+
+    .query-index {
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: rgba(196,165,90,0.25);
+      align-self: flex-start;
+      margin-top: 0.1rem;
+    }
+
+    .query-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: rgba(232,223,200,0.82);
+      font-style: italic;
+      padding-left: 0.25rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: rgba(232,223,200,0.2);
+    }
+    .empty-state-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .empty-state-text {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+    }
+    .empty-state-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      color: rgba(232,223,200,0.15);
+    }
+
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+      color: rgba(196,165,90,0.5);
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+    }
+    .loading-spinner {
+      width: 30px; height: 30px;
+      border: 1px solid rgba(196,165,90,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error state */
+    .db-error {
+      padding: 1.25rem 1.5rem;
+      background: rgba(200,80,60,0.07);
+      border: 1px solid rgba(200,80,60,0.2);
+      border-radius: 4px;
+      color: var(--error);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .admin-topbar { flex-direction: column; align-items: flex-start; }
+      .admin-topbar-right { width: 100%; justify-content: space-between; }
+      .query-entry { padding: 1rem; }
+      .filter-bar { flex-direction: column; }
+      #searchInput { min-width: unset; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     LOGIN SCREEN
+     Password protected — DO NOT remove
+     ═══════════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-emblem">
+    <div class="login-emblem-ring">
+      <span class="login-emblem-icon">🔐</span>
+    </div>
+    <span class="login-emblem-label">RACMUN · Restricted Access</span>
+  </div>
+
+  <div class="login-heading">
+    <h1>ADMIN<br>PORTAL</h1>
+    <p class="subtitle">Authorised personnel only</p>
+  </div>
+
+  <div class="login-divider"></div>
+
+  <div class="login-card">
+    <label class="login-label" for="adminPassword">Admin Passphrase</label>
+    <input
+      type="password"
+      id="adminPassword"
+      placeholder="Enter passphrase"
+      autocomplete="off"
+    />
+    <button class="login-btn" onclick="attemptLogin()">
+      <span>→ &nbsp;Authenticate</span>
+    </button>
+    <div id="loginError" class="hidden">
+      Incorrect passphrase. Access denied.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ADMIN DASHBOARD — Hidden until authenticated
+     ═══════════════════════════════════════════════════ -->
+<div id="adminDashboard" class="hidden">
+
+  <!-- Top bar -->
+  <div class="admin-topbar">
+    <div class="admin-topbar-left">
+      <span class="admin-badge">Admin</span>
+      <h1 class="admin-title">Delegate Queries</h1>
+    </div>
+    <div class="admin-topbar-right">
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        Live
+      </div>
+      <div class="count-badge">
+        <span id="queryCount">0</span> queries
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search by phone number or query text..."
+      oninput="renderQueries()"
+    />
+    <button class="sort-btn active" id="sortNewest" onclick="setSortOrder('newest')">
+      Newest First
+    </button>
+    <button class="sort-btn" id="sortOldest" onclick="setSortOrder('oldest')">
+      Oldest First
+    </button>
+  </div>
+
+  <!-- Query list -->
+  <div class="queries-container" id="queriesContainer">
+    <div class="loading-state">
+      <div class="loading-spinner"></div>
+      Loading queries...
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     FIREBASE + ADMIN LOGIC
+     ═══════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  // ✏️ EDIT HERE: Must be the SAME Firebase config as index.html
+  const firebaseConfig = {
+    apiKey:            "YOUR_API_KEY",            // ✏️ Replace
+    authDomain:        "YOUR_PROJECT.firebaseapp.com", // ✏️ Replace
+    databaseURL:       "YOUR_DATABASE_URL",       // ✏️ Replace
+    projectId:         "YOUR_PROJECT_ID",         // ✏️ Replace
+    storageBucket:     "YOUR_STORAGE_BUCKET",     // ✏️ Replace
+    messagingSenderId: "YOUR_SENDER_ID",          // ✏️ Replace
+    appId:             "YOUR_APP_ID"              // ✏️ Replace
+  };
+
+  // ✏️ EDIT HERE: Change admin password if needed
+  const ADMIN_PASSWORD = "RACMUN26";
+
+  /* ----------------------------------------------------------
+     State
+     ---------------------------------------------------------- */
+  let allQueries = [];     // Full list of query objects
+  let sortOrder  = 'newest';
+  let fbListener = null;   // Firebase onValue unsubscribe handle
+  let isAuthenticated = false;
+
+  /* ----------------------------------------------------------
+     LOGIN
+     ---------------------------------------------------------- */
+  window.attemptLogin = function () {
+    const val = document.getElementById('adminPassword').value;
+    const err = document.getElementById('loginError');
+
+    if (val === ADMIN_PASSWORD) {
+      isAuthenticated = true;
+      // Transition: hide login, show dashboard
+      const loginScreen = document.getElementById('loginScreen');
+      loginScreen.style.opacity = '0';
+      loginScreen.style.pointerEvents = 'none';
+      setTimeout(() => {
+        loginScreen.classList.add('hidden');
+        const dash = document.getElementById('adminDashboard');
+        dash.classList.remove('hidden');
+        // Next frame: fade in
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => dash.classList.add('active'));
+        });
+        startFirebaseListener();
+      }, 500);
+    } else {
+      err.classList.remove('hidden');
+      err.style.animation = 'none';
+      requestAnimationFrame(() => { err.style.animation = 'fadeIn 0.4s ease'; });
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('adminPassword').focus();
+    }
+  };
+
+  /* ----------------------------------------------------------
+     LOGOUT
+     ---------------------------------------------------------- */
+  window.doLogout = function () {
+    isAuthenticated = false;
+    allQueries = [];
+    if (fbListener) { fbListener(); fbListener = null; }
+
+    const dash = document.getElementById('adminDashboard');
+    dash.classList.remove('active');
+    setTimeout(() => {
+      dash.classList.add('hidden');
+      const login = document.getElementById('loginScreen');
+      login.classList.remove('hidden');
+      login.style.opacity = '1';
+      login.style.pointerEvents = '';
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('loginError').classList.add('hidden');
+    }, 600);
+  };
+
+  /* ----------------------------------------------------------
+     FIREBASE REAL-TIME LISTENER
+     Reads from queries/ node only — does not touch other nodes
+     ---------------------------------------------------------- */
+  function startFirebaseListener() {
+    let app, db;
+    try {
+      app = initializeApp(firebaseConfig, 'adminApp');
+      db  = getDatabase(app);
+    } catch (e) {
+      // App already initialised (e.g. hot reload) — reuse
+      const { getApp } = window.__fbApps || {};
+      if (e.code === 'app/duplicate-app') {
+        const { getApp } = window;
+        app = window.__fbAdminApp;
+        db  = getDatabase(app);
+      } else {
+        showDbError('Firebase initialisation failed: ' + e.message);
+        return;
+      }
+    }
+
+    window.__fbAdminApp = app;
+
+    const queriesRef = ref(db, 'queries');  // READ from queries/ node only
+    fbListener = onValue(queriesRef, (snapshot) => {
+      allQueries = [];
+      snapshot.forEach(child => {
+        const d = child.val();
+        allQueries.push({
+          id:        child.key,
+          phone:     String(d.phone     || '—'),
+          query:     String(d.query     || ''),
+          timestamp: Number(d.timestamp || 0)
+        });
+      });
+      renderQueries();
+    }, (err) => {
+      showDbError('Could not load queries: ' + err.message);
+    });
+  }
+
+  /* ----------------------------------------------------------
+     SORT ORDER TOGGLE
+     ---------------------------------------------------------- */
+  window.setSortOrder = function (order) {
+    sortOrder = order;
+    document.getElementById('sortNewest').classList.toggle('active', order === 'newest');
+    document.getElementById('sortOldest').classList.toggle('active', order === 'oldest');
+    renderQueries();
+  };
+
+  /* ----------------------------------------------------------
+     RENDER QUERIES
+     Applies search filter and sort, then builds DOM
+     ---------------------------------------------------------- */
+  window.renderQueries = function () {
+    const container   = document.getElementById('queriesContainer');
+    const searchTerm  = document.getElementById('searchInput').value.toLowerCase().trim();
+
+    // Filter
+    let filtered = allQueries.filter(q =>
+      q.phone.toLowerCase().includes(searchTerm) ||
+      q.query.toLowerCase().includes(searchTerm)
+    );
+
+    // Sort
+    filtered = filtered.sort((a, b) =>
+      sortOrder === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
+    );
+
+    // Update count
+    document.getElementById('queryCount').textContent = allQueries.length;
+
+    // Render
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-state-icon">✉️</span>
+          <div class="empty-state-text">${allQueries.length === 0 ? 'No queries yet' : 'No results found'}</div>
+          <div class="empty-state-sub">${allQueries.length === 0 ? 'Delegate submissions will appear here in real time' : 'Try adjusting your search'}</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = '';
+    filtered.forEach((q, idx) => {
+      const card = document.createElement('div');
+      card.className = 'query-entry';
+      card.style.animationDelay = `${Math.min(idx * 40, 400)}ms`;
+
+      card.innerHTML = `
+        <div class="query-entry-header">
+          <div class="query-meta">
+            <span class="query-phone">${escapeHtml(q.phone)}</span>
+            <span class="query-timestamp">${formatTimestamp(q.timestamp)}</span>
+          </div>
+          <span class="query-index">#${String(idx + 1).padStart(3, '0')}</span>
+        </div>
+        <div class="query-text">${escapeHtml(q.query)}</div>`;
+
+      container.appendChild(card);
+    });
+  };
+
+  /* ----------------------------------------------------------
+     HELPERS
+     ---------------------------------------------------------- */
+  function formatTimestamp(ts) {
+    if (!ts) return 'Unknown time';
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    }) + ' · ' + d.toLocaleTimeString('en-IN', {
+      hour: '2-digit', minute: '2-digit', hour12: true
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showDbError(msg) {
+    document.getElementById('queriesContainer').innerHTML =
+      `<div class="db-error">⚠ ${msg}</div>`;
+  }
+
+  /* ----------------------------------------------------------
+     KEYBOARD SUPPORT
+     ---------------------------------------------------------- */
+  document.getElementById('adminPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.attemptLogin();
+  });
+</script>
+</body>
+</html>
