@@ -1276,7 +1276,7 @@ async function handleReveal() {
     delegateData = await res.json();
     // Support both flat array format AND object format with committee info
     if (Array.isArray(delegateData.delegates)) {
-      delegateList = delegateData.delegates.map(d => String(d));
+      delegateList = delegateData.delegates.map(d => d.phone);
     } else {
       delegateList = Object.keys(delegateData.delegates).map(String);
     }
@@ -1307,10 +1307,15 @@ async function handleReveal() {
 
   // 4) Extract committee override from JSON if present
   // Supports: { delegates: { "phone": { committee: "UNSC" } } }
-  let committeeOverride = null;
-  if (!Array.isArray(delegateData.delegates) && delegateData.delegates[phone]) {
-    committeeOverride = delegateData.delegates[phone].committee || null;
-  }
+  if (!delegateList.includes(phone)) {
+  btn.textContent = '✦ Reveal My Allocation ✦';
+  showError();
+  return;
+}
+
+// Get committee override
+const foundDelegate = delegateData.delegates.find(d => d.phone === phone);
+const committeeOverride = foundDelegate ? foundDelegate.committee : null;
 
   // 5) Compute allocation
   const { committee, portfolio } = computeAllocation(phone, delegateList, committeeOverride);

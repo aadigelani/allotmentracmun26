@@ -1,21 +1,21 @@
 {
   "delegates": [
     { "phone": "7004418449", "committee": "UNSC" },
-    { "phone": "7485807579", "committee": "LOK SABHA" },
-    { "phone": "8757283135", "committee": "LOK SABHA" },
+    { "phone": "7485807579", "committee": "Lok Sabha"},
+    { "phone": "8757283135", "committee": "Lok Sabha"},
     { "phone": "9304127522", "committee": "UNSC" },
-    { "phone": "9472774552", "committee": "LOK SABHA" },
-    { "phone": "7258808507", "committee": "LOK SABHA" },
+    { "phone": "9472774552", "committee": "Lok Sabha"},
+    { "phone": "7258808507", "committee": "Lok Sabha"},
     { "phone": "7488605925", "committee": "UNSC" },
-    { "phone": "7004231628", "committee": "LOK SABHA" },
-    { "phone": "7667457441", "committee": "LOK SABHA" },
+    { "phone": "7004231628", "committee": "Lok Sabha"},
+    { "phone": "7667457441", "committee": "Lok Sabha"},
     { "phone": "9241400499", "committee": "UNSC" },
     { "phone": "9889611419", "committee": "UNSC" },
-    { "phone": "8210829014", "committee": "LOK SABHA" },
-    { "phone": "6205180499", "committee": "LOK SABHA" },
-    { "phone": "7367923014", "committee": "LOK SABHA" },
-    { "phone": "8825306321", "committee": "LOK SABHA" },
-    { "phone": "6206010822", "committee": "LOK SABHA" },
+    { "phone": "8210829014", "committee": "Lok Sabha"},
+    { "phone": "6205180499", "committee": "Lok Sabha"},
+    { "phone": "7367923014", "committee": "Lok Sabha"},
+    { "phone": "8825306321", "committee": "Lok Sabha"},
+    { "phone": "6206010822", "committee": "Lok Sabha"},
     { "phone": "8271992596", "committee": "UNSC" }
   ]
 }
