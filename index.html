@@ -691,6 +691,66 @@
     }
 
     /* ============================================================
+       ADMIN NAV BUTTON — Top-right corner link to admin panel
+       ============================================================ */
+    .admin-nav-btn {
+      position: fixed;
+      top: 1.25rem; right: 1.25rem;
+      z-index: 200;
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.45rem 1rem;
+      background: rgba(5,8,15,0.7);
+      border: 1px solid rgba(196,165,90,0.2);
+      border-radius: 3px;
+      color: rgba(196,165,90,0.5);
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: color 0.3s, border-color 0.3s, box-shadow 0.3s;
+      animation: fadeIn 1.5s 1.2s ease both;
+    }
+    .admin-nav-btn:hover {
+      color: var(--accent);
+      border-color: rgba(196,165,90,0.45);
+      box-shadow: 0 0 15px rgba(196,165,90,0.1);
+    }
+    .admin-nav-btn-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(196,165,90,0.4);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       ALLOTMENT STATUS MESSAGES — Already allotted / success feedback
+       ============================================================ */
+    #allotmentStatus {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 3px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      text-align: center;
+      line-height: 1.5;
+      animation: fadeIn 0.4s ease;
+    }
+    #allotmentStatus.success {
+      background: rgba(90,180,120,0.07);
+      border: 1px solid rgba(90,180,120,0.25);
+      color: #7ec99a;
+    }
+    #allotmentStatus.info {
+      background: rgba(196,165,90,0.06);
+      border: 1px solid rgba(196,165,90,0.25);
+      color: var(--accent);
+    }
+
+    /* ============================================================
        QUERY SUBMISSION SECTION — Added for delegate queries
        ============================================================ */
     #querySection {
@@ -861,6 +921,12 @@
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 
+<!-- Admin Panel navigation button — top-right corner -->
+<a href="./admin.html" class="admin-nav-btn" title="Admin Panel">
+  <span class="admin-nav-btn-dot"></span>
+  Admin Panel
+</a>
+
 <!-- ═══════════════════════════════════════════════════
      LANDING / INPUT SCREEN
      ═══════════════════════════════════════════════════ -->
@@ -898,6 +964,7 @@
     <div id="errorMsg" class="hidden">
       No allocation found. Please check your number or wait for the official release.
     </div>
+    <div id="allotmentStatus" class="hidden"></div>
   </div>
 
   <p class="landing-footer">RACMUN &nbsp;·&nbsp; ALLOCATION PORTAL &nbsp;·&nbsp; CONFIDENTIAL</p>
@@ -1013,26 +1080,48 @@
 // ✏️ EDIT HERE: Replace with your allotments.json path if needed
 const ALLOTMENTS_JSON_PATH = './allotments.json';
 
+// ✏️ EDIT HERE: RACMUN website URL
+const RACMUN_WEBSITE = "https://racmun-2026.vercel.app/";
+
+// ✏️ EDIT HERE: Guide download links
+const GUIDES = {
+  unsc_background:  { label: "Background Guide",     icon: "📄", href: "./assets/unsc-background-guide.pdf" },
+  unsc_position:    { label: "Position Paper Guide", icon: "📋", href: "./assets/Position-Guide.pdf" },
+  loksabha_guide:   { label: "Lok Sabha Guide",      icon: "🏛",  href: "./assets/loksabha-background-guide.pdf" },
+  loksabha_position:{ label: "Position Paper Guide", icon: "📋", href: "./assets/Position-Guide.pdf" }
+};
+
+// ============================================================
+// FEATURE 1 — ADMIN BIASED ALLOTMENT
+// ✏️ EDIT HERE: Pre-assign specific portfolios to specific phone numbers.
+// Format: "phoneNumber": { committee: "UNSC" | "Lok Sabha", portfolio: "Portfolio Name" }
+// These take absolute priority over the random pool.
+// ============================================================
+const ADMIN_ASSIGNED = {
+  // "9876543210": { committee: "UNSC",      portfolio: "United States of America" },
+  // "9123456780": { committee: "Lok Sabha", portfolio: "Narendra Modi" }
+};
+
+// ============================================================
+// FEATURE 2 — PORTFOLIO LISTS PER COMMITTEE
 // ✏️ EDIT HERE: List of UNSC member countries (keep these unique)
+// ============================================================
 const UNSC_COUNTRIES = [
   "United States of America",
   "People's Republic of China",
   "Russian Federation",
   "French Republic",
   "United Kingdom of Great Britain and Northern Ireland",
-
   "Kingdom of Denmark",
   "Islamic Republic of Pakistan",
   "Hellenic Republic",
   "Federal Republic of Somalia",
   "Republic of Panama",
-
   "Kingdom of Bahrain",
   "Republic of Colombia",
   "Democratic Republic of the Congo",
   "Republic of Latvia",
   "Republic of Liberia",
-
   "State of Israel",
   "Republic of Iraq",
   "Islamic Republic of Iran",
@@ -1050,82 +1139,21 @@ const UNSC_COUNTRIES = [
   "United Arab Emirates"
 ];
 
-// ✏️ EDIT HERE: Add real Lok Sabha MP names below (replace these placeholders)
+// ✏️ EDIT HERE: Add real Lok Sabha MP names below
 const LOK_SABHA_MPS = [
-"Narendra Modi",
-"Amit Shah",
-"Rajnath Singh",
-"Nitin Gadkari",
-"Piyush Goyal",
-"Dharmendra Pradhan",
-"Smriti Irani",
-"Anurag Thakur",
-"Tejasvi Surya",
-"Nishikant Dubey",
-"Annapurna Devi",
-"Arjun Ram Meghwal",
-"Kiren Rijiju",
-"Rajiv Pratap Rudy",
-"Giriraj Singh",
-"Parvesh Verma",
-"Bansuri Swaraj",
-"Kangna Ranaut",
-"Rahul Gandhi",
-"Shashi Tharoor",
-"Karti Chidambaram",
-"Manish Tewari",
-"Gaurav Gogoi",
-"Deepender Singh Hooda",
-"Kumari Selja",
-"Pradyut Bordoloi",
-"Vishnu Deo Sai",
-"Adhir Ranjan Chowdhury",
-"Akhilesh Yadav",
-"Dimple Yadav",
-"Dharmendra Yadav",
-"Supriya Sule",
-"Sunil Tatkare",
-"Abhishek Banerjee",
-"Mahua Moitra",
-"Kalyan Banerjee",
-"Asaduddin Owaisi",
-"Kanimozhi Karunanidhi",
-"Dayanidhi Maran",
-"Chirag Paswan",
-"Harsimrat Kaur Badal",
-"Rajkumar Ranjan Singh",
-"Indra Hang Subba",
-"Tapir Gao",
-"Vincent H. Pala",
-"Agatha Sangma"
-]
-
-// ✏️ EDIT HERE: Guide download links (use '#' as placeholder until you have real links)
-const GUIDES = {
-  unsc_background: {
-    label: "Background Guide",
-    icon: "📄",
-    href: "./assets/unsc-background-guide.pdf" // ✏️ Replace with actual UNSC Background Guide URL
-  },
-  unsc_position: {
-    label: "Position Paper Guide",
-    icon: "📋",
-    href: "./assets/Position-Guide.pdf" // ✏️ Replace with actual Position Paper Guide URL
-  },
-  loksabha_guide: {
-    label: "Lok Sabha Guide",
-    icon: "🏛",
-    href: "./assets/loksabha-background-guide.pdf" // ✏️ Replace with actual Lok Sabha Guide URL
-  },
-  loksabha_position: {
-    label: "Position Paper Guide",
-    icon: "📋",
-    href: "./assets/Position-Guide.pdf" // ✏️ Replace with actual Position Paper Guide URL
-  }
-};
-
-// ✏️ EDIT HERE: RACMUN website URL
-const RACMUN_WEBSITE = "https://racmun-2026.vercel.app/"; // Replace with real URL
+  "Narendra Modi", "Amit Shah", "Rajnath Singh", "Nitin Gadkari",
+  "Piyush Goyal", "Dharmendra Pradhan", "Smriti Irani", "Anurag Thakur",
+  "Tejasvi Surya", "Nishikant Dubey", "Annapurna Devi", "Arjun Ram Meghwal",
+  "Kiren Rijiju", "Rajiv Pratap Rudy", "Giriraj Singh", "Parvesh Verma",
+  "Bansuri Swaraj", "Kangna Ranaut", "Rahul Gandhi", "Shashi Tharoor",
+  "Karti Chidambaram", "Manish Tewari", "Gaurav Gogoi", "Deepender Singh Hooda",
+  "Kumari Selja", "Pradyut Bordoloi", "Vishnu Deo Sai", "Adhir Ranjan Chowdhury",
+  "Akhilesh Yadav", "Dimple Yadav", "Dharmendra Yadav", "Supriya Sule",
+  "Sunil Tatkare", "Abhishek Banerjee", "Mahua Moitra", "Kalyan Banerjee",
+  "Asaduddin Owaisi", "Kanimozhi Karunanidhi", "Dayanidhi Maran", "Chirag Paswan",
+  "Harsimrat Kaur Badal", "Rajkumar Ranjan Singh", "Indra Hang Subba",
+  "Tapir Gao", "Vincent H. Pala", "Agatha Sangma"
+];
 
 
 /* ============================================================
@@ -1158,82 +1186,142 @@ function shuffleWithSeed(arr, rng) {
 }
 
 /* ============================================================
-   ALLOTMENT LOGIC
-   Assigns committee + portfolio deterministically per phone
+   FEATURE 1 + 2 — UPGRADED ALLOTMENT LOGIC
+   Priority: ADMIN_ASSIGNED → Firebase cache → random allotment
+   Committee-based: uses committee from JSON to pick portfolio list
    ============================================================ */
-function computeAllocation(phone, allDelegates) {
-  const seed = hashPhone(phone);
-  const rng  = seededRandom(seed);
-
-  // 1) Shuffle all delegates with a shared seed so same delegates
-  //    get allocated the same way every time
-  const globalRng = seededRandom(12345); // fixed seed for consistent ordering
-  const shuffled  = shuffleWithSeed(allDelegates, globalRng);
-
-  // 2) Shuffle pool arrays with same global seed
-  const countries = shuffleWithSeed(UNSC_COUNTRIES, seededRandom(99991));
-  const mps       = shuffleWithSeed(LOK_SABHA_MPS,  seededRandom(77773));
-
-  // 3) Find this delegate's position in shuffled list
-  const idx = shuffled.findIndex(d => d === phone);
-
-  // 4) Controlled random committee assignment
-  //    Use delegate-specific RNG for variety, but weight ~50/50
-  const committeeRoll = rng();
-  const committee = committeeRoll < 0.5 ? "UNSC" : "Lok Sabha";
-
-  // 5) Assign portfolio — pick from country/MP pool based on idx
-  //    mod ensures no index out of bounds
-  let portfolio;
-  if (committee === "UNSC") {
-    portfolio = countries[idx % countries.length];
-  } else {
-    portfolio = mps[idx % mps.length];
+function computeAllocation(phone, allDelegates, committeeOverride) {
+  // — Step 1: Check ADMIN_ASSIGNED first (highest priority) —
+  if (ADMIN_ASSIGNED[phone]) {
+    return {
+      committee: ADMIN_ASSIGNED[phone].committee,
+      portfolio: ADMIN_ASSIGNED[phone].portfolio,
+      source:    'admin'
+    };
   }
 
-  return { committee, portfolio };
+  // — Step 2: Determine committee —
+  // committeeOverride comes from allotments.json if present,
+  // otherwise fall back to seeded random assignment
+  let committee;
+  if (committeeOverride && (committeeOverride === "UNSC" || committeeOverride === "Lok Sabha")) {
+    committee = committeeOverride;
+  } else {
+    const seed = hashPhone(phone);
+    const rng  = seededRandom(seed);
+    committee  = rng() < 0.5 ? "UNSC" : "Lok Sabha";
+  }
+
+  // — Step 3: Build available pool — remove all ADMIN_ASSIGNED portfolios of same committee —
+  const adminReservedUnsc = new Set(
+    Object.values(ADMIN_ASSIGNED)
+      .filter(a => a.committee === "UNSC")
+      .map(a => a.portfolio)
+  );
+  const adminReservedLok = new Set(
+    Object.values(ADMIN_ASSIGNED)
+      .filter(a => a.committee === "Lok Sabha")
+      .map(a => a.portfolio)
+  );
+
+  const availableUnsc = UNSC_COUNTRIES.filter(c => !adminReservedUnsc.has(c));
+  const availableLok  = LOK_SABHA_MPS.filter(m => !adminReservedLok.has(m));
+
+  // — Step 4: Pick portfolio from correct committee pool —
+  const globalRng  = seededRandom(12345);
+  const shuffled   = shuffleWithSeed(allDelegates, globalRng);
+  const idx        = shuffled.findIndex(d => d === phone);
+
+  const countries  = shuffleWithSeed(availableUnsc, seededRandom(99991));
+  const mps        = shuffleWithSeed(availableLok,  seededRandom(77773));
+
+  const portfolio  = committee === "UNSC"
+    ? countries[Math.abs(idx) % Math.max(countries.length, 1)]
+    : mps[Math.abs(idx) % Math.max(mps.length, 1)];
+
+  return { committee, portfolio, source: 'computed' };
 }
 
 
 /* ============================================================
    MAIN REVEAL HANDLER
+   - Validates phone
+   - Checks Firebase for existing allotment (re-allotment prevention)
+   - Reads committee from allotments.json if provided
+   - Falls back to computed allotment
+   - Saves new allotment to Firebase
    ============================================================ */
 async function handleReveal() {
   const rawInput = document.getElementById('phoneInput').value.trim();
-  const phone    = rawInput; // Treat phone numbers as strings (no parseInt)
+  const phone    = rawInput; // Phone numbers treated as strings
 
-  // Basic validation
+  // — Validation —
   if (!phone || phone.length < 10) {
     showError();
     return;
   }
 
-  // Hide error if visible
   document.getElementById('errorMsg').classList.add('hidden');
+  document.getElementById('allotmentStatus').classList.add('hidden');
 
-  // 1) Fetch allotments.json
-  let delegateList;
+  // — Loading state on button —
+  const btn = document.querySelector('.reveal-btn span');
+  btn.textContent = '⟳  Checking...';
+
+  // 1) Fetch allotments.json for registered list + optional committee mapping
+  let delegateData; // raw JSON
+  let delegateList; // flat phone array
   try {
-    const res  = await fetch(ALLOTMENTS_JSON_PATH);
-    const data = await res.json();
-    delegateList = data.delegates.map(d => String(d)); // ensure strings
+    const res   = await fetch(ALLOTMENTS_JSON_PATH);
+    delegateData = await res.json();
+    // Support both flat array format AND object format with committee info
+    if (Array.isArray(delegateData.delegates)) {
+      delegateList = delegateData.delegates.map(d => String(d));
+    } else {
+      delegateList = Object.keys(delegateData.delegates).map(String);
+    }
   } catch (e) {
     console.error(e);
+    btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
     showError("Server error. Try again later or contact organizers.");
     return;
   }
 
-  // 2) Check if phone exists
+  // 2) Validate: only registered numbers allowed
   if (!delegateList.includes(phone)) {
+    btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
     showError();
     return;
   }
 
-  // 3) Compute allocation
-  const { committee, portfolio } = computeAllocation(phone, delegateList);
+  // 3) Check Firebase for existing allotment (re-allotment prevention)
+  const existingAllotment = await getExistingAllotment(phone);
+  if (existingAllotment) {
+    btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
+    // Show "already allotted" message then show the same result
+    showAllotmentStatus('Already allotted — showing your existing allocation.', 'info');
+    await runLoadingSequence(existingAllotment.committee);
+    showResult(existingAllotment.committee, existingAllotment.portfolio);
+    return;
+  }
 
-  // 4) Run cinematic loading sequence then show result
+  // 4) Extract committee override from JSON if present
+  // Supports: { delegates: { "phone": { committee: "UNSC" } } }
+  let committeeOverride = null;
+  if (!Array.isArray(delegateData.delegates) && delegateData.delegates[phone]) {
+    committeeOverride = delegateData.delegates[phone].committee || null;
+  }
+
+  // 5) Compute allocation
+  const { committee, portfolio } = computeAllocation(phone, delegateList, committeeOverride);
+
+  // 6) Save to Firebase (non-blocking — fire and forget; failure is silent to delegate)
+  saveAllotmentToFirebase(phone, committee, portfolio);
+
+  // 7) Run cinematic loading sequence then show result
+  btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
   await runLoadingSequence(committee);
+  showAllotmentStatus('✦ Allotted successfully.', 'success');
   showResult(committee, portfolio);
 }
 
@@ -1244,6 +1332,72 @@ function showError(msg) {
   el.classList.remove('hidden');
   el.style.animation = 'none';
   requestAnimationFrame(() => { el.style.animation = 'fadeIn 0.5s ease'; });
+}
+
+function showAllotmentStatus(msg, type) {
+  const el = document.getElementById('allotmentStatus');
+  el.textContent = msg;
+  el.className = type; // 'success' | 'info'
+  el.classList.remove('hidden');
+  el.style.animation = 'none';
+  requestAnimationFrame(() => { el.style.animation = 'fadeIn 0.5s ease'; });
+  if (type === 'success') setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+
+/* ============================================================
+   FIREBASE ALLOTMENT HELPERS
+   Reads/writes to delegates/{phone} node
+   These run in the context of the module-scoped Firebase instance
+   exposed via window.__racmunDb (set by the query submission module)
+   ============================================================ */
+
+// Attempt to read existing allotment from Firebase
+// Returns { committee, portfolio } or null
+async function getExistingAllotment(phone) {
+  try {
+    const db = await waitForDb();
+    if (!db) return null;
+    const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+    const snap = await get(ref(db, `delegates/${phone}`));
+    if (snap.exists()) {
+      const d = snap.val();
+      if (d.committee && d.portfolio) return { committee: d.committee, portfolio: d.portfolio };
+    }
+    return null;
+  } catch (e) {
+    console.warn('Could not read existing allotment:', e);
+    return null;
+  }
+}
+
+// Save allotment to Firebase delegates/{phone}
+async function saveAllotmentToFirebase(phone, committee, portfolio) {
+  try {
+    const db = await waitForDb();
+    if (!db) return;
+    const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+    await set(ref(db, `delegates/${phone}`), {
+      committee,
+      portfolio,
+      allottedAt: Date.now()
+    });
+  } catch (e) {
+    console.warn('Could not save allotment to Firebase:', e);
+    // Silent failure — delegate still sees their result
+  }
+}
+
+// Wait for Firebase db instance to be available (set by the module script below)
+function waitForDb(maxWait = 3000) {
+  return new Promise(resolve => {
+    if (window.__racmunDb) { resolve(window.__racmunDb); return; }
+    const start    = Date.now();
+    const interval = setInterval(() => {
+      if (window.__racmunDb) { clearInterval(interval); resolve(window.__racmunDb); }
+      else if (Date.now() - start > maxWait) { clearInterval(interval); resolve(null); }
+    }, 100);
+  });
 }
 
 
@@ -1518,13 +1672,12 @@ window.addEventListener('resize', () => {
 </script>
 
 <!-- ═══════════════════════════════════════════════════
-     FIREBASE — Query Submission System
+     FIREBASE — Query Submission System + DB exposure
      Using Firebase Realtime Database v9 compat SDK
      DO NOT modify existing nodes — only writes to queries/
+     delegates/ nodes are written by allotment logic above
      ═══════════════════════════════════════════════════ -->
 <script type="module">
-  // ✏️ EDIT HERE: Replace with your actual Firebase project config
-  // Get this from Firebase Console → Project Settings → Your apps → SDK setup
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -1541,48 +1694,40 @@ window.addEventListener('resize', () => {
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
+  // Expose db instance so the non-module allotment helpers above can use it
+  window.__racmunDb = db;
+
   /* ----------------------------------------------------------
      submitQuery()
-     Validates input, pushes to Firebase queries/ node,
-     clears form, shows confirmation.
+     Validates input, pushes to Firebase queries/ node
      ---------------------------------------------------------- */
   window.submitQuery = async function () {
     const phoneEl  = document.getElementById('queryPhoneInput');
     const queryEl  = document.getElementById('queryTextarea');
-    const statusEl = document.getElementById('queryStatus');
     const btn      = document.querySelector('.query-submit-btn');
 
     const phone = phoneEl.value.trim();
     const query = queryEl.value.trim();
 
-    // — Validation —
     if (!phone || phone.length < 10) {
-      showQueryStatus('Please enter a valid 10-digit phone number.', 'error');
-      return;
+      showQueryStatus('Please enter a valid 10-digit phone number.', 'error'); return;
     }
     if (!query) {
-      showQueryStatus('Please enter your query before submitting.', 'error');
-      return;
+      showQueryStatus('Please enter your query before submitting.', 'error'); return;
     }
 
-    // — Disable button while submitting —
     btn.disabled = true;
     btn.querySelector('span').textContent = '⟳  Submitting...';
 
     try {
-      // Push to Firebase: queries/{autoId}
-      // This creates a NEW node — does NOT touch any existing data
       await push(ref(db, 'queries'), {
-        phone:     phone,          // string — treated as string per spec
+        phone:     phone,
         query:     query,
         timestamp: Date.now()
       });
-
-      // — Success —
       phoneEl.value = '';
       queryEl.value = '';
       showQueryStatus('✦ Query submitted successfully. We will get back to you shortly.', 'success');
-
     } catch (err) {
       console.error('Firebase query push failed:', err);
       showQueryStatus('Submission failed. Please check your connection and try again.', 'error');
@@ -1595,15 +1740,11 @@ window.addEventListener('resize', () => {
   function showQueryStatus(msg, type) {
     const el = document.getElementById('queryStatus');
     el.textContent = msg;
-    el.className = type; // 'success' or 'error'
+    el.className = type;
     el.classList.remove('hidden');
-    // Auto-hide success after 6s
-    if (type === 'success') {
-      setTimeout(() => { el.classList.add('hidden'); }, 6000);
-    }
+    if (type === 'success') setTimeout(() => { el.classList.add('hidden'); }, 6000);
   }
 
-  // Only allow numeric input in query phone field
   document.getElementById('queryPhoneInput').addEventListener('input', function () {
     this.value = this.value.replace(/\D/g, '');
   });

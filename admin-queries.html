@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RACMUN — Admin · Query Viewer</title>
+  <title>RACMUN — Admin Panel</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -519,6 +519,170 @@
       .filter-bar { flex-direction: column; }
       #searchInput { min-width: unset; width: 100%; }
     }
+
+    /* ============================================================
+       NAV TABS — Switch between Queries and Allotments
+       ============================================================ */
+    .admin-nav-tabs {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      margin-bottom: 1.75rem;
+      border-bottom: 1px solid rgba(196,165,90,0.1);
+      padding-bottom: 0;
+      animation: fadeUp 0.6s 0.05s ease both;
+    }
+    .nav-tab {
+      padding: 0.6rem 1.4rem;
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 3px 3px 0 0;
+      color: rgba(232,223,200,0.35);
+      font-family: 'Cinzel', serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.3s, border-color 0.3s, background 0.3s;
+      position: relative; top: 1px;
+    }
+    .nav-tab:hover { color: rgba(196,165,90,0.7); }
+    .nav-tab.active {
+      color: var(--accent);
+      border-color: rgba(196,165,90,0.2);
+      background: rgba(196,165,90,0.04);
+    }
+    .nav-tab-panel { display: none; }
+    .nav-tab-panel.active { display: block; }
+
+    /* ============================================================
+       ALLOTMENTS PANEL
+       ============================================================ */
+    .allotments-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .allotments-count {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      color: rgba(232,223,200,0.4);
+      letter-spacing: 0.1em;
+    }
+    .allotments-count span { color: var(--accent); font-weight: 500; }
+
+    /* PDF Download button */
+    .pdf-btn {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      padding: 0.65rem 1.4rem;
+      background: transparent;
+      border: 1px solid rgba(196,165,90,0.35);
+      border-radius: 3px;
+      color: var(--accent);
+      font-family: 'Cinzel', serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: color 0.4s, box-shadow 0.4s;
+    }
+    .pdf-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.76,0,0.24,1);
+      z-index: 0;
+    }
+    .pdf-btn:hover::before { transform: scaleX(1); }
+    .pdf-btn:hover { color: #05080f; box-shadow: 0 0 25px rgba(196,165,90,0.2); }
+    .pdf-btn span { position: relative; z-index: 1; }
+    .pdf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pdf-btn:disabled::before { display: none; }
+
+    /* Allotment table */
+    .allotments-table-wrap {
+      width: 100%; overflow-x: auto;
+      animation: fadeIn 0.5s 0.2s ease both;
+    }
+    table.allotments-table {
+      width: 100%; border-collapse: collapse;
+      font-family: 'Jost', sans-serif;
+    }
+    .allotments-table thead tr {
+      border-bottom: 1px solid rgba(196,165,90,0.2);
+    }
+    .allotments-table th {
+      font-family: 'Cinzel', serif;
+      font-size: 0.58rem;
+      letter-spacing: 0.3em;
+      color: rgba(196,165,90,0.5);
+      text-transform: uppercase;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 400;
+    }
+    .allotments-table td {
+      padding: 0.9rem 1rem;
+      font-size: 0.85rem;
+      color: rgba(232,223,200,0.75);
+      border-bottom: 1px solid rgba(196,165,90,0.06);
+      vertical-align: middle;
+    }
+    .allotments-table tbody tr {
+      transition: background 0.2s;
+    }
+    .allotments-table tbody tr:hover {
+      background: rgba(196,165,90,0.03);
+    }
+    .allotment-phone {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+    .allotment-committee-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .allotment-committee-badge.unsc {
+      background: rgba(123,163,200,0.1);
+      border: 1px solid rgba(123,163,200,0.25);
+      color: #7ba3c8;
+    }
+    .allotment-committee-badge.loksabha {
+      background: rgba(224,124,58,0.08);
+      border: 1px solid rgba(224,124,58,0.22);
+      color: #e07c3a;
+    }
+    .allotment-portfolio { color: rgba(232,223,200,0.85); font-size: 0.88rem; }
+    .allotment-time { color: rgba(232,223,200,0.25); font-size: 0.72rem; }
+
+    /* Back to index link */
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: 'Cinzel', serif;
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: rgba(196,165,90,0.3);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .back-link:hover { color: rgba(196,165,90,0.7); }
+
+    @media (max-width: 600px) {
+      .allotments-toolbar { flex-direction: column; align-items: flex-start; }
+      .allotments-table th, .allotments-table td { padding: 0.7rem 0.6rem; }
+      .nav-tab { font-size: 0.55rem; padding: 0.55rem 0.9rem; letter-spacing: 0.2em; }
+    }
   </style>
 </head>
 <body>
@@ -572,54 +736,96 @@
   <div class="admin-topbar">
     <div class="admin-topbar-left">
       <span class="admin-badge">Admin</span>
-      <h1 class="admin-title">Delegate Queries</h1>
+      <h1 class="admin-title">RACMUN Admin Panel</h1>
     </div>
     <div class="admin-topbar-right">
+      <a href="./index.html" class="back-link">← Index</a>
       <div class="live-indicator">
         <div class="live-dot"></div>
         Live
-      </div>
-      <div class="count-badge">
-        <span id="queryCount">0</span> queries
       </div>
       <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
   </div>
 
-  <!-- Filter bar -->
-  <div class="filter-bar">
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search by phone number or query text..."
-      oninput="renderQueries()"
-    />
-    <button class="sort-btn active" id="sortNewest" onclick="setSortOrder('newest')">
-      Newest First
-    </button>
-    <button class="sort-btn" id="sortOldest" onclick="setSortOrder('oldest')">
-      Oldest First
-    </button>
+  <!-- Navigation Tabs -->
+  <div class="admin-nav-tabs">
+    <button class="nav-tab active" id="tabQueries"     onclick="switchTab('queries')">✉ Queries</button>
+    <button class="nav-tab"        id="tabAllotments"  onclick="switchTab('allotments')">⚖ Allotments</button>
   </div>
 
-  <!-- Query list -->
-  <div class="queries-container" id="queriesContainer">
-    <div class="loading-state">
-      <div class="loading-spinner"></div>
-      Loading queries...
+  <!-- ── TAB: QUERIES ── -->
+  <div class="nav-tab-panel active" id="panelQueries">
+    <div class="filter-bar">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by phone number or query text..."
+        oninput="renderQueries()"
+      />
+      <div class="count-badge" style="align-self:center;">
+        <span id="queryCount">0</span> queries
+      </div>
+      <button class="sort-btn active" id="sortNewest" onclick="setSortOrder('newest')">
+        Newest First
+      </button>
+      <button class="sort-btn" id="sortOldest" onclick="setSortOrder('oldest')">
+        Oldest First
+      </button>
+    </div>
+    <div class="queries-container" id="queriesContainer">
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        Loading queries...
+      </div>
     </div>
   </div>
+
+  <!-- ── TAB: ALLOTMENTS ── -->
+  <div class="nav-tab-panel" id="panelAllotments">
+    <div class="allotments-toolbar">
+      <div class="allotments-count">
+        <span id="allotmentCount">0</span> delegates allotted
+      </div>
+      <button class="pdf-btn" id="pdfBtn" onclick="downloadAllotmentsPDF()">
+        <span>⬇ &nbsp;Download Allotments PDF</span>
+      </button>
+    </div>
+    <div class="allotments-table-wrap">
+      <table class="allotments-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Phone Number</th>
+            <th>Committee</th>
+            <th>Portfolio</th>
+            <th>Allotted At</th>
+          </tr>
+        </thead>
+        <tbody id="allotmentsBody">
+          <tr><td colspan="5" style="text-align:center;padding:3rem;">
+            <div class="loading-spinner" style="margin:0 auto 1rem;"></div>
+            <div style="font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.3em;color:rgba(196,165,90,0.4);">LOADING ALLOTMENTS...</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 
 <!-- ═══════════════════════════════════════════════════
      FIREBASE + ADMIN LOGIC
      ═══════════════════════════════════════════════════ -->
+
+<!-- jsPDF for client-side PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script type="module">
   import { initializeApp }             from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // ✏️ EDIT HERE: Must be the SAME Firebase config as index.html
   const firebaseConfig = {
     apiKey: "AIzaSyBmcrIARMXksDd0SD-GJMVY0HidSjS0WZ8",
     authDomain: "racmun-voting.firebaseapp.com",
@@ -636,10 +842,13 @@
   /* ----------------------------------------------------------
      State
      ---------------------------------------------------------- */
-  let allQueries = [];     // Full list of query objects
-  let sortOrder  = 'newest';
-  let fbListener = null;   // Firebase onValue unsubscribe handle
+  let allQueries     = [];
+  let allAllotments  = [];   // { phone, committee, portfolio, allottedAt }
+  let sortOrder      = 'newest';
+  let fbListenerQ    = null; // queries listener unsubscribe
+  let fbListenerA    = null; // allotments listener unsubscribe
   let isAuthenticated = false;
+  let activeTab       = 'queries';
 
   /* ----------------------------------------------------------
      LOGIN
@@ -650,7 +859,6 @@
 
     if (val === ADMIN_PASSWORD) {
       isAuthenticated = true;
-      // Transition: hide login, show dashboard
       const loginScreen = document.getElementById('loginScreen');
       loginScreen.style.opacity = '0';
       loginScreen.style.pointerEvents = 'none';
@@ -658,11 +866,10 @@
         loginScreen.classList.add('hidden');
         const dash = document.getElementById('adminDashboard');
         dash.classList.remove('hidden');
-        // Next frame: fade in
         requestAnimationFrame(() => {
           requestAnimationFrame(() => dash.classList.add('active'));
         });
-        startFirebaseListener();
+        startFirebaseListeners();
       }, 500);
     } else {
       err.classList.remove('hidden');
@@ -678,8 +885,9 @@
      ---------------------------------------------------------- */
   window.doLogout = function () {
     isAuthenticated = false;
-    allQueries = [];
-    if (fbListener) { fbListener(); fbListener = null; }
+    allQueries = []; allAllotments = [];
+    if (fbListenerQ) { fbListenerQ(); fbListenerQ = null; }
+    if (fbListenerA) { fbListenerA(); fbListenerA = null; }
 
     const dash = document.getElementById('adminDashboard');
     dash.classList.remove('active');
@@ -695,19 +903,26 @@
   };
 
   /* ----------------------------------------------------------
-     FIREBASE REAL-TIME LISTENER
-     Reads from queries/ node only — does not touch other nodes
+     TAB SWITCHING
      ---------------------------------------------------------- */
-  function startFirebaseListener() {
+  window.switchTab = function (tab) {
+    activeTab = tab;
+    document.getElementById('tabQueries').classList.toggle('active',    tab === 'queries');
+    document.getElementById('tabAllotments').classList.toggle('active', tab === 'allotments');
+    document.getElementById('panelQueries').classList.toggle('active',    tab === 'queries');
+    document.getElementById('panelAllotments').classList.toggle('active', tab === 'allotments');
+  };
+
+  /* ----------------------------------------------------------
+     FIREBASE REAL-TIME LISTENERS
+     ---------------------------------------------------------- */
+  function startFirebaseListeners() {
     let app, db;
     try {
       app = initializeApp(firebaseConfig, 'adminApp');
       db  = getDatabase(app);
     } catch (e) {
-      // App already initialised (e.g. hot reload) — reuse
-      const { getApp } = window.__fbApps || {};
       if (e.code === 'app/duplicate-app') {
-        const { getApp } = window;
         app = window.__fbAdminApp;
         db  = getDatabase(app);
       } else {
@@ -715,11 +930,11 @@
         return;
       }
     }
-
     window.__fbAdminApp = app;
 
-    const queriesRef = ref(db, 'queries');  // READ from queries/ node only
-    fbListener = onValue(queriesRef, (snapshot) => {
+    // — Queries listener —
+    const queriesRef = ref(db, 'queries');
+    fbListenerQ = onValue(queriesRef, (snapshot) => {
       allQueries = [];
       snapshot.forEach(child => {
         const d = child.val();
@@ -734,10 +949,33 @@
     }, (err) => {
       showDbError('Could not load queries: ' + err.message);
     });
+
+    // — Allotments (delegates/) listener —
+    const allotmentsRef = ref(db, 'delegates');
+    fbListenerA = onValue(allotmentsRef, (snapshot) => {
+      allAllotments = [];
+      snapshot.forEach(child => {
+        const d = child.val();
+        if (d.committee && d.portfolio) {
+          allAllotments.push({
+            phone:      child.key,
+            committee:  String(d.committee  || ''),
+            portfolio:  String(d.portfolio  || ''),
+            allottedAt: Number(d.allottedAt || 0)
+          });
+        }
+      });
+      // Sort newest first by default
+      allAllotments.sort((a, b) => b.allottedAt - a.allottedAt);
+      renderAllotments();
+    }, (err) => {
+      document.getElementById('allotmentsBody').innerHTML =
+        `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--error);font-style:italic;">⚠ ${err.message}</td></tr>`;
+    });
   }
 
   /* ----------------------------------------------------------
-     SORT ORDER TOGGLE
+     RENDER QUERIES
      ---------------------------------------------------------- */
   window.setSortOrder = function (order) {
     sortOrder = order;
@@ -746,29 +984,20 @@
     renderQueries();
   };
 
-  /* ----------------------------------------------------------
-     RENDER QUERIES
-     Applies search filter and sort, then builds DOM
-     ---------------------------------------------------------- */
   window.renderQueries = function () {
-    const container   = document.getElementById('queriesContainer');
-    const searchTerm  = document.getElementById('searchInput').value.toLowerCase().trim();
+    const container  = document.getElementById('queriesContainer');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
 
-    // Filter
     let filtered = allQueries.filter(q =>
       q.phone.toLowerCase().includes(searchTerm) ||
       q.query.toLowerCase().includes(searchTerm)
     );
-
-    // Sort
     filtered = filtered.sort((a, b) =>
       sortOrder === 'newest' ? b.timestamp - a.timestamp : a.timestamp - b.timestamp
     );
 
-    // Update count
     document.getElementById('queryCount').textContent = allQueries.length;
 
-    // Render
     if (filtered.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -784,7 +1013,6 @@
       const card = document.createElement('div');
       card.className = 'query-entry';
       card.style.animationDelay = `${Math.min(idx * 40, 400)}ms`;
-
       card.innerHTML = `
         <div class="query-entry-header">
           <div class="query-meta">
@@ -794,30 +1022,199 @@
           <span class="query-index">#${String(idx + 1).padStart(3, '0')}</span>
         </div>
         <div class="query-text">${escapeHtml(q.query)}</div>`;
-
       container.appendChild(card);
     });
+  };
+
+  /* ----------------------------------------------------------
+     RENDER ALLOTMENTS TABLE
+     ---------------------------------------------------------- */
+  function renderAllotments() {
+    const tbody = document.getElementById('allotmentsBody');
+    document.getElementById('allotmentCount').textContent = allAllotments.length;
+
+    if (allAllotments.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:3rem;color:rgba(232,223,200,0.15);font-family:'Cormorant Garamond',serif;font-style:italic;">No allotments recorded yet. Allotments appear here as delegates reveal their portfolios.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = '';
+    allAllotments.forEach((a, idx) => {
+      const isUnsc     = a.committee === "UNSC";
+      const badgeClass = isUnsc ? 'unsc' : 'loksabha';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:rgba(196,165,90,0.25);font-size:0.72rem;">${String(idx+1).padStart(3,'0')}</td>
+        <td><span class="allotment-phone">${escapeHtml(a.phone)}</span></td>
+        <td><span class="allotment-committee-badge ${badgeClass}">${escapeHtml(a.committee)}</span></td>
+        <td class="allotment-portfolio">${escapeHtml(a.portfolio)}</td>
+        <td class="allotment-time">${a.allottedAt ? formatTimestamp(a.allottedAt) : '—'}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ----------------------------------------------------------
+     FEATURE 4 — DOWNLOAD ALLOTMENTS PDF
+     Uses jsPDF (loaded via CDN above) to generate a clean report
+     ---------------------------------------------------------- */
+  window.downloadAllotmentsPDF = function () {
+    if (allAllotments.length === 0) {
+      alert('No allotments to export yet.');
+      return;
+    }
+
+    const btn = document.getElementById('pdfBtn');
+    btn.disabled = true;
+    btn.querySelector('span').textContent = '⟳  Generating PDF...';
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW  = doc.internal.pageSize.getWidth();
+      const pageH  = doc.internal.pageSize.getHeight();
+      const margin = 18;
+      const colW   = (pageW - margin * 2 - 6) / 3; // 3 data columns
+      let y        = margin;
+
+      // ── Helper: add page if near bottom ──
+      function checkPage(neededHeight = 12) {
+        if (y + neededHeight > pageH - margin) {
+          doc.addPage();
+          y = margin;
+          drawPageHeader();
+        }
+      }
+
+      // ── Decorative top bar ──
+      function drawPageHeader() {
+        doc.setFillColor(15, 20, 35);
+        doc.rect(0, 0, pageW, 14, 'F');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(196, 165, 90);
+        doc.text('RACMUN  ·  CONFIDENTIAL  ·  ALLOTMENT REPORT', pageW / 2, 8.5, { align: 'center' });
+        doc.setDrawColor(196, 165, 90);
+        doc.setLineWidth(0.3);
+        doc.line(margin, 14, pageW - margin, 14);
+      }
+
+      // ── Page 1 Title area ──
+      doc.setFillColor(15, 20, 35);
+      doc.rect(0, 0, pageW, pageH, 'F');
+
+      // Gold title bar
+      doc.setFillColor(30, 35, 50);
+      doc.rect(0, 0, pageW, 55, 'F');
+      doc.setDrawColor(196, 165, 90);
+      doc.setLineWidth(0.4);
+      doc.line(margin, 55, pageW - margin, 55);
+
+      doc.setTextColor(196, 165, 90);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text('RACMUN', pageW / 2, 24, { align: 'center' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(180, 170, 145);
+      doc.text('MODEL UNITED NATIONS  ·  ALLOTMENT REPORT', pageW / 2, 33, { align: 'center' });
+
+      const now = new Date();
+      doc.setFontSize(7.5);
+      doc.setTextColor(120, 115, 100);
+      doc.text(`Generated: ${now.toLocaleDateString('en-IN', { day:'2-digit', month:'long', year:'numeric' })}  ·  ${now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true })}`, pageW / 2, 41, { align: 'center' });
+
+      doc.setFontSize(8);
+      doc.setTextColor(150, 145, 130);
+      doc.text(`Total Delegates: ${allAllotments.length}`, pageW / 2, 49, { align: 'center' });
+
+      y = 65;
+
+      // ── Table header ──
+      function drawTableHeader() {
+        doc.setFillColor(25, 30, 48);
+        doc.rect(margin, y - 4, pageW - margin * 2, 9, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(196, 165, 90);
+        doc.text('#',          margin + 2,        y + 1.5);
+        doc.text('PHONE',      margin + 10,       y + 1.5);
+        doc.text('COMMITTEE',  margin + 10 + colW, y + 1.5);
+        doc.text('PORTFOLIO',  margin + 10 + colW * 2, y + 1.5);
+        doc.setDrawColor(196, 165, 90);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + 5, pageW - margin, y + 5);
+        y += 10;
+      }
+      drawTableHeader();
+
+      // ── Table rows ──
+      allAllotments.forEach((a, idx) => {
+        checkPage(10);
+        const isEven = idx % 2 === 0;
+        if (isEven) {
+          doc.setFillColor(22, 26, 40);
+          doc.rect(margin, y - 3.5, pageW - margin * 2, 8, 'F');
+        }
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(100, 95, 80);
+        doc.text(String(idx + 1).padStart(3, '0'), margin + 2, y + 1);
+
+        doc.setTextColor(196, 165, 90);
+        doc.text(String(a.phone), margin + 10, y + 1);
+
+        const isUnsc = a.committee === "UNSC";
+        doc.setTextColor(isUnsc ? 123 : 224, isUnsc ? 163 : 124, isUnsc ? 200 : 58);
+        doc.text(String(a.committee), margin + 10 + colW, y + 1);
+
+        doc.setTextColor(210, 200, 175);
+        // Truncate long portfolio names
+        const pText = doc.splitTextToSize(String(a.portfolio), colW + 10);
+        doc.text(pText[0] || '', margin + 10 + colW * 2, y + 1);
+
+        doc.setDrawColor(50, 55, 70);
+        doc.setLineWidth(0.1);
+        doc.line(margin, y + 4.5, pageW - margin, y + 4.5);
+        y += 8;
+      });
+
+      // ── Footer on last page ──
+      doc.setFontSize(6.5);
+      doc.setTextColor(80, 75, 65);
+      doc.text('RACMUN · This document is confidential and intended for authorised personnel only.', pageW / 2, pageH - 10, { align: 'center' });
+      doc.setDrawColor(50, 50, 50);
+      doc.setLineWidth(0.2);
+      doc.line(margin, pageH - 13, pageW - margin, pageH - 13);
+
+      // ── Save ──
+      const fileName = `RACMUN_Allotments_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.pdf`;
+      doc.save(fileName);
+
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      alert('PDF generation failed. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.querySelector('span').textContent = '⬇ \u00a0Download Allotments PDF';
+    }
   };
 
   /* ----------------------------------------------------------
      HELPERS
      ---------------------------------------------------------- */
   function formatTimestamp(ts) {
-    if (!ts) return 'Unknown time';
+    if (!ts) return '—';
     const d = new Date(ts);
-    return d.toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric'
-    }) + ' · ' + d.toLocaleTimeString('en-IN', {
-      hour: '2-digit', minute: '2-digit', hour12: true
-    });
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+      + ' · ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
   }
 
   function escapeHtml(str) {
     return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function showDbError(msg) {
