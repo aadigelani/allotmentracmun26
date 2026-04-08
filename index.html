@@ -1227,12 +1227,42 @@ function shuffleWithSeed(arr, rng) {
 }
 
 /* ============================================================
-   FEATURE 1 + 2 — UPGRADED ALLOTMENT LOGIC
-   Priority: ADMIN_ASSIGNED → Firebase cache → random allotment
-   Committee-based: uses committee from JSON to pick portfolio list
+   GLOBAL STATE — Populated from Firebase before any new assignment
+   assignedMap : phone → { committee, portfolio }
+   usedMPs     : Set of all portfolios already committed in Firebase
    ============================================================ */
-function computeAllocation(phone, allDelegates, committeeOverride) {
-  // — Step 1: Check ADMIN_ASSIGNED first (highest priority) —
+let assignedMap    = {};
+let usedMPs        = new Set();
+let firebaseLoaded = false;
+
+async function loadFirebaseAllocations() {
+  if (firebaseLoaded) return;
+  try {
+    const db = await waitForDb();
+    if (!db) { firebaseLoaded = true; return; }
+    const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+    const snap = await get(ref(db, 'delegates'));
+    if (snap.exists()) {
+      snap.forEach(child => {
+        const d = child.val();
+        if (d && d.committee && d.portfolio) {
+          assignedMap[child.key] = { committee: d.committee, portfolio: d.portfolio };
+          usedMPs.add(d.portfolio);
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Could not pre-load Firebase allocations:', e);
+  }
+  firebaseLoaded = true;
+}
+
+/* ============================================================
+   ALLOCATION LOGIC — Firebase-aware, duplicate-safe
+   Priority: ADMIN_ASSIGNED → already in Firebase → pick from unused pool
+   ============================================================ */
+function computeAllocation(phone, committeeOverride) {
+  // — Step 1: Admin override (absolute priority) —
   if (ADMIN_ASSIGNED[phone]) {
     return {
       committee: ADMIN_ASSIGNED[phone].committee,
@@ -1241,74 +1271,40 @@ function computeAllocation(phone, allDelegates, committeeOverride) {
     };
   }
 
-  // — Step 2: Determine committee —
-  // committeeOverride comes from allotments.json if present,
-  // otherwise fall back to seeded random assignment
-  let committee;
-  if (committeeOverride && (committeeOverride === "UNSC" || committeeOverride === "Lok Sabha")) {
-    committee = committeeOverride;
-  } else {
-    const seed = hashPhone(phone);
-    const rng  = seededRandom(seed);
-    committee  = rng() < 0.5 ? "UNSC" : "Lok Sabha";
+  // — Step 2: Already stored in Firebase (defensive; normally caught in handleReveal) —
+  if (assignedMap[phone]) {
+    return { ...assignedMap[phone], source: 'firebase' };
   }
 
-  // — Step 3: Build available pool — remove all ADMIN_ASSIGNED portfolios of same committee —
+  // — Step 3: Determine committee from JSON override or seeded fallback —
+  const committee = (committeeOverride === "UNSC" || committeeOverride === "Lok Sabha")
+    ? committeeOverride
+    : (seededRandom(hashPhone(phone))() < 0.5 ? "UNSC" : "Lok Sabha");
+
+  // — Step 4: Build pool excluding ADMIN_ASSIGNED and already-used portfolios —
   const adminReservedUnsc = new Set(
-    Object.values(ADMIN_ASSIGNED)
-      .filter(a => a.committee === "UNSC")
-      .map(a => a.portfolio)
+    Object.values(ADMIN_ASSIGNED).filter(a => a.committee === "UNSC").map(a => a.portfolio)
   );
   const adminReservedLok = new Set(
-    Object.values(ADMIN_ASSIGNED)
-      .filter(a => a.committee === "Lok Sabha")
-      .map(a => a.portfolio)
+    Object.values(ADMIN_ASSIGNED).filter(a => a.committee === "Lok Sabha").map(a => a.portfolio)
   );
 
-  const availableUnsc = UNSC_COUNTRIES.filter(c => !adminReservedUnsc.has(c));
-  const availableLok  = LOK_SABHA_MPS.filter(m => !adminReservedLok.has(m));
+  let pool = committee === "UNSC"
+    ? UNSC_COUNTRIES.filter(c => !adminReservedUnsc.has(c) && !usedMPs.has(c))
+    : LOK_SABHA_MPS.filter(m => !adminReservedLok.has(m) && !usedMPs.has(m));
 
-  // — Step 4: Pick portfolio from correct committee pool —
-  //
-  // FIX: Index by rank within the committee-specific delegate list, NOT by
-  // position in the full mixed list. Using the full list caused modulo
-  // collisions: two Lok Sabha phones at full-list positions P and P+N (where
-  // N = MP list length) both resolved to the same MP → duplicate.
-  // Ranking within the same-committee group guarantees a strict 1-to-1 mapping.
-  //
-  // Build committee-scoped phone lists (excluding ADMIN_ASSIGNED phones,
-  // which never reach this code path).
-  const unscPhones = allDelegates.filter(p => {
-    // Include only non-admin-assigned phones whose committee is UNSC.
-    // allDelegates here is a flat phone-string array; committee comes from
-    // the caller's committeeOverride logic, so we reconstruct from the
-    // window-cached delegate map built in handleReveal.
-    const rec = window.__delegateMap && window.__delegateMap[p];
-    return rec ? rec.committee === "UNSC" : false;
-  });
-  const lokPhones = allDelegates.filter(p => {
-    const rec = window.__delegateMap && window.__delegateMap[p];
-    return rec ? rec.committee === "Lok Sabha" : false;
-  });
+  // — Step 5: Fallback if all portfolios exhausted (allow reuse as last resort) —
+  if (pool.length === 0) {
+    console.warn('⚠️ All portfolios exhausted for', committee, '— falling back to full pool');
+    pool = committee === "UNSC"
+      ? UNSC_COUNTRIES.filter(c => !adminReservedUnsc.has(c))
+      : LOK_SABHA_MPS.filter(m => !adminReservedLok.has(m));
+  }
 
-  // Deterministic shuffle of each committee's phone list (fixed seed per committee).
-  const unscShuffled = shuffleWithSeed(unscPhones, seededRandom(54321));
-  const lokShuffled  = shuffleWithSeed(lokPhones,  seededRandom(12345));
-
-  // Rank = position within this committee's shuffled list. Always 0-based and
-  // unique per phone → no two phones share the same rank → no duplicate portfolio.
-  const rank = committee === "UNSC"
-    ? unscShuffled.indexOf(phone)
-    : lokShuffled.indexOf(phone);
-
-  const safeRank = rank === -1 ? 0 : rank; // fallback: should never happen
-
-  const countries = shuffleWithSeed(availableUnsc, seededRandom(99991));
-  const mps       = shuffleWithSeed(availableLok,  seededRandom(77773));
-
-  const portfolio = committee === "UNSC"
-    ? countries[safeRank % Math.max(countries.length, 1)]
-    : mps[safeRank % Math.max(mps.length, 1)];
+  // — Step 6: Pick deterministically from available pool using phone-seeded shuffle —
+  // Each phone gets a unique shuffle of the *remaining* pool → first item is their pick.
+  const shuffled  = shuffleWithSeed(pool, seededRandom(hashPhone(phone + committee)));
+  const portfolio = shuffled[0];
 
   return { committee, portfolio, source: 'computed' };
 }
@@ -1389,23 +1385,31 @@ async function handleReveal() {
     return;
   }
 
-  // 4) Extract committee override from JSON if present
-  // Supports: { delegates: { "phone": { committee: "UNSC" } } }
-  if (!delegateList.includes(phone)) {
-  btn.textContent = '✦ Reveal My Allocation ✦';
-  showError();
-  return;
-}
+  // 4) Extract committee override from JSON
+  const foundDelegate = delegateData.delegates.find(d => d.phone === phone);
+  const committeeOverride = foundDelegate ? foundDelegate.committee : null;
 
-// Get committee override
-const foundDelegate = delegateData.delegates.find(d => d.phone === phone);
-const committeeOverride = foundDelegate ? foundDelegate.committee : null;
+  // 5) Load all existing Firebase allocations into memory (once per session).
+  //    Builds assignedMap + usedMPs so computeAllocation knows taken portfolios.
+  await loadFirebaseAllocations();
 
-  // 5) Compute allocation
-  const { committee, portfolio } = computeAllocation(phone, delegateList, committeeOverride);
+  // Re-check: another tab may have saved while we were loading JSON
+  const rechecked = assignedMap[phone];
+  if (rechecked) {
+    btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
+    showAllotmentStatus('Already allotted — showing your existing allocation.', 'info');
+    await runLoadingSequence(rechecked.committee);
+    showResult(rechecked.committee, rechecked.portfolio);
+    return;
+  }
 
-  // 6) Save to Firebase (non-blocking — fire and forget; failure is silent to delegate)
-  saveAllotmentToFirebase(phone, committee, portfolio);
+  // 6) Compute allocation from unused portfolios only
+  const { committee, portfolio } = computeAllocation(phone, committeeOverride);
+
+  // 7) Await Firebase save — update in-memory state only after confirmed write
+  await saveAllotmentToFirebase(phone, committee, portfolio);
+  assignedMap[phone] = { committee, portfolio };
+  usedMPs.add(portfolio);
 
   // 7) Run cinematic loading sequence then show result
   btn.textContent = '✦ \u00a0Reveal My Allocation\u00a0 ✦';
