@@ -1270,16 +1270,46 @@ function computeAllocation(phone, allDelegates, committeeOverride) {
   const availableLok  = LOK_SABHA_MPS.filter(m => !adminReservedLok.has(m));
 
   // — Step 4: Pick portfolio from correct committee pool —
-  const globalRng  = seededRandom(12345);
-  const shuffled   = shuffleWithSeed(allDelegates, globalRng);
-  const idx        = shuffled.findIndex(d => d === phone);
+  //
+  // FIX: Index by rank within the committee-specific delegate list, NOT by
+  // position in the full mixed list. Using the full list caused modulo
+  // collisions: two Lok Sabha phones at full-list positions P and P+N (where
+  // N = MP list length) both resolved to the same MP → duplicate.
+  // Ranking within the same-committee group guarantees a strict 1-to-1 mapping.
+  //
+  // Build committee-scoped phone lists (excluding ADMIN_ASSIGNED phones,
+  // which never reach this code path).
+  const unscPhones = allDelegates.filter(p => {
+    // Include only non-admin-assigned phones whose committee is UNSC.
+    // allDelegates here is a flat phone-string array; committee comes from
+    // the caller's committeeOverride logic, so we reconstruct from the
+    // window-cached delegate map built in handleReveal.
+    const rec = window.__delegateMap && window.__delegateMap[p];
+    return rec ? rec.committee === "UNSC" : false;
+  });
+  const lokPhones = allDelegates.filter(p => {
+    const rec = window.__delegateMap && window.__delegateMap[p];
+    return rec ? rec.committee === "Lok Sabha" : false;
+  });
 
-  const countries  = shuffleWithSeed(availableUnsc, seededRandom(99991));
-  const mps        = shuffleWithSeed(availableLok,  seededRandom(77773));
+  // Deterministic shuffle of each committee's phone list (fixed seed per committee).
+  const unscShuffled = shuffleWithSeed(unscPhones, seededRandom(54321));
+  const lokShuffled  = shuffleWithSeed(lokPhones,  seededRandom(12345));
 
-  const portfolio  = committee === "UNSC"
-    ? countries[Math.abs(idx) % Math.max(countries.length, 1)]
-    : mps[Math.abs(idx) % Math.max(mps.length, 1)];
+  // Rank = position within this committee's shuffled list. Always 0-based and
+  // unique per phone → no two phones share the same rank → no duplicate portfolio.
+  const rank = committee === "UNSC"
+    ? unscShuffled.indexOf(phone)
+    : lokShuffled.indexOf(phone);
+
+  const safeRank = rank === -1 ? 0 : rank; // fallback: should never happen
+
+  const countries = shuffleWithSeed(availableUnsc, seededRandom(99991));
+  const mps       = shuffleWithSeed(availableLok,  seededRandom(77773));
+
+  const portfolio = committee === "UNSC"
+    ? countries[safeRank % Math.max(countries.length, 1)]
+    : mps[safeRank % Math.max(mps.length, 1)];
 
   return { committee, portfolio, source: 'computed' };
 }
@@ -1321,6 +1351,19 @@ async function handleReveal() {
       delegateList = delegateData.delegates.map(d => d.phone);
     } else {
       delegateList = Object.keys(delegateData.delegates).map(String);
+    }
+
+    // Build a phone → { committee } lookup map used by computeAllocation
+    // to rank delegates within their own committee group (duplicate-prevention fix).
+    window.__delegateMap = {};
+    if (Array.isArray(delegateData.delegates)) {
+      delegateData.delegates.forEach(d => {
+        window.__delegateMap[String(d.phone)] = { committee: d.committee || null };
+      });
+    } else {
+      Object.entries(delegateData.delegates).forEach(([phone, rec]) => {
+        window.__delegateMap[String(phone)] = { committee: rec.committee || null };
+      });
     }
   } catch (e) {
     console.error(e);
