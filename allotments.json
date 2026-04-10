@@ -3,7 +3,6 @@
     { "phone": "7004418440", "committee": "UNSC" },
     { "phone": "7485807579", "committee": "Lok Sabha"},
     { "phone": "8757283135", "committee": "Lok Sabha"},
-    { "phone": "9304127522", "committee": "UNSC" },
     { "phone": "9472774552", "committee": "Lok Sabha"},
     { "phone": "7258808507", "committee": "Lok Sabha"},
     { "phone": "7488605925", "committee": "UNSC" },
@@ -53,6 +52,14 @@
     { "phone": "9934345021", "committee": "UNSC" },
     { "phone": "9431325700", "committee": "Lok Sabha" },
     { "phone": "6201356762", "committee": "Lok Sabha" },
-    { "phone": "6205444919", "committee": "Lok Sabha" }
+    { "phone": "6205444919", "committee": "Lok Sabha" },
+    { "phone": "7033030187", "committee": "Lok Sabha" },
+    { "phone": "9204479230", "committee": "Lok Sabha" },
+    { "phone": "9279790377", "committee": "UNSC" },
+    { "phone": "7542012595", "committee": "Lok Sabha" },
+    { "phone": "6203504457", "committee": "UNSC" },
+    { "phone": "8002526219", "committee": "UNSC" },
+    { "phone": "9508347925", "committee": "Lok Sabha" },
+    { "phone": "8709362340", "committee": "Lok Sabha" }
   ]
 }
